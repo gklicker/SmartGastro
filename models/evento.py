@@ -8,6 +8,12 @@ class Evento:
     def get_name(self):
         return self.__nombre
 
+    def get_location(self):
+        return self.__ubicacion
+
+    def get_date(self):
+        return self.__fecha
+
     def get_weather_forecast(self):
         return self.__pronostico_clima
 

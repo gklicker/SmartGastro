@@ -1,0 +1,3 @@
+from repository.in_memory.producto_repository import ProductoRepository
+from repository.in_memory.venta_repository import VentaRepository
+from repository.in_memory.evento_repository import EventoRepository
