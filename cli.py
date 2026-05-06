@@ -1,3 +1,4 @@
+from external.weather import geocode
 from repository.in_memory import EventoRepository, ProductoRepository, VentaRepository
 from services import InventoryService, SaleService
 
@@ -79,12 +80,14 @@ def menu_registrar_venta():
 def menu_crear_evento():
     print("\n--- Crear evento ---")
     nombre = input("Nombre del evento: ").strip()
-    ubicacion = input("Ubicación: ").strip()
     fecha = input("Fecha (YYYY-MM-DD): ").strip()
-    latitud = float(input("Latitud: "))
-    longitud = float(input("Longitud: "))
+    localidad = input("Localidad (ej: Palermo, Buenos Aires): ").strip()
     try:
-        sales.create_event(nombre, ubicacion, fecha, latitud, longitud)
+        latitud, longitud, nombre_lugar, pais = geocode(localidad)
+        print(f"  ✓ Localidad encontrada: {nombre_lugar}, {pais} ({latitud}, {longitud})")
+        sales.create_event(nombre, f"{nombre_lugar}, {pais}", fecha, latitud, longitud)
+    except ValueError as e:
+        print(f"✗ {e}")
     except Exception as e:
         print(f"✗ Error al obtener el clima: {e}")
 
