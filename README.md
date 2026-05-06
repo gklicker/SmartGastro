@@ -30,3 +30,40 @@ Se solicita diseñar **SmartGastro**, un sistema para gestionar inventario, vent
 | Python 3 | Lógica de negocio, consola (1ra entrega) |
 | Flask | Backend web (2da entrega) |
 | HTML / CSS / JS | Frontend (2da entrega) |
+
+---
+
+## Funcionalidades
+
+- Agregar productos al inventario
+- Registrar ventas con descuento automático de stock
+- Consultar el inventario actual con alertas de stock bajo
+- Consultar el pronóstico del clima antes de un evento
+
+---
+
+## Cómo ejecutar
+
+**1. Crear el entorno virtual**
+```bash
+python3 -m venv .venv
+```
+
+**2. Activar el entorno**
+```bash
+# macOS / Linux
+source .venv/bin/activate
+
+# Windows
+.venv\Scripts\activate
+```
+
+**3. Instalar dependencias**
+```bash
+pip install -r requirements.txt
+```
+
+**4. Ejecutar**
+```bash
+python3 cli.py
+```
