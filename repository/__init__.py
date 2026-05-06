@@ -1,7 +1,5 @@
 from repository.in_memory import (
-    ProductoRepository,
-    VentaRepository,
-    EventoRepository,
+    ProductRepository,
     UserRepository,
     IngredientRepository,
     MenuItemRepository,
