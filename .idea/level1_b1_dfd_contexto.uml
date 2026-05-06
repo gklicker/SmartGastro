@@ -1,0 +1,32 @@
+@startuml
+
+skinparam rectangle {
+  BackgroundColor #FFFDE7
+  BorderColor #F9A825
+  FontSize 13
+}
+
+skinparam rectangle<<sistema>> {
+  BackgroundColor #E3F2FD
+  BorderColor #1565C0
+  FontSize 14
+  FontStyle bold
+}
+
+skinparam ArrowColor #424242
+skinparam ArrowFontSize 11
+
+rectangle "Dueño / Operador" as dueno
+rectangle "Cocinero" as cocinero
+rectangle "API del Clima" as api
+rectangle "SmartGastro" <<sistema>> as sistema
+
+dueno -right-> sistema : Datos de productos\nRegistro de ventas
+sistema -left-> dueno : Estado del inventario\nAlertas de stock\nAlerta climática
+
+cocinero -right-> sistema : Consulta de stock disponible
+sistema -left-> cocinero : Ingredientes disponibles\nAlerta de faltante
+
+api -down-> sistema : Pronóstico meteorológico
+
+@enduml

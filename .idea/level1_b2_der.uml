@@ -1,0 +1,50 @@
+@startuml
+
+skinparam entity {
+  BackgroundColor #E3F2FD
+  BorderColor #1565C0
+  FontSize 12
+}
+
+skinparam ArrowColor #424242
+
+entity "Producto" as producto {
+  * id_producto : INT <<PK>>
+  --
+  nombre : VARCHAR(100)
+  precio : DECIMAL(10,2)
+  stock : INT
+  stock_minimo : INT
+}
+
+entity "DetalleVenta" as detalle {
+  * id_detalle : INT <<PK>>
+  --
+  id_venta : INT <<FK>>
+  id_producto : INT <<FK>>
+  cantidad : INT
+  precio_unitario : DECIMAL(10,2)
+}
+
+entity "Venta" as venta {
+  * id_venta : INT <<PK>>
+  --
+  fecha : DATETIME
+  total : DECIMAL(10,2)
+  id_evento : INT <<FK>>
+}
+
+entity "Evento" as evento {
+  * id_evento : INT <<PK>>
+  --
+  nombre : VARCHAR(100)
+  ubicacion : VARCHAR(200)
+  fecha : DATE
+  pronostico_clima : VARCHAR(50)
+}
+
+evento ||--o{ venta : "1:N"
+venta ||--o{ detalle : "1:N"
+producto ||--o{ detalle : "1:N"
+
+@enduml

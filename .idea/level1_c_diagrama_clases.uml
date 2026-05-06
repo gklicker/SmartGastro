@@ -1,0 +1,78 @@
+@startuml
+
+skinparam class {
+  BackgroundColor #E3F2FD
+  BorderColor #1565C0
+  FontSize 12
+}
+skinparam ArrowColor #424242
+
+class Foodtruck {
+  - nombre : str
+  - inventario : Inventario
+  - ventas : list
+  + get_inventory() : Inventario
+  + register_sale(venta: Venta) : void
+  + show_inventory() : void
+  + show_sales() : void
+}
+
+class Inventario {
+  - productos : list
+  + add_product(producto: Producto) : void
+  + find_product(nombre: str) : Producto
+  + show_inventory() : void
+  + check_alerts() : void
+  + get_products() : list
+}
+
+class Producto {
+  - nombre : str
+  - precio : float
+  - __stock : int
+  - stock_minimo : int
+  + get_name() : str
+  + get_price() : float
+  + get_stock() : int
+  + get_min_stock() : int
+  + set_stock(cantidad: int) : void
+  + deduct_stock(cantidad: int) : void
+  + has_low_stock() : bool
+}
+
+class Venta {
+  - id_venta : int
+  - fecha : str
+  - evento : Evento
+  - detalles : list
+  + add_item(detalle: DetalleVenta) : void
+  + calculate_total() : float
+  + get_id() : int
+}
+
+class DetalleVenta {
+  - producto : Producto
+  - cantidad : int
+  - precio_unitario : float
+  + get_subtotal() : float
+  + get_product() : Producto
+  + get_quantity() : int
+}
+
+class Evento {
+  - nombre : str
+  - ubicacion : str
+  - fecha : str
+  - pronostico_clima : str
+  + get_name() : str
+  + get_weather_forecast() : str
+}
+
+Foodtruck "1" *-- "1" Inventario : contiene
+Foodtruck "1" o-- "0..*" Venta : registra
+Inventario "1" *-- "0..*" Producto : gestiona
+Venta "1" *-- "1..*" DetalleVenta : compone
+Venta "1" --> "1" Evento : ocurre en
+DetalleVenta "1" --> "1" Producto : referencia
+
+@enduml

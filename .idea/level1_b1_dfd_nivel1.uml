@@ -1,0 +1,60 @@
+@startuml
+
+skinparam rectangle {
+  BackgroundColor #FFFDE7
+  BorderColor #F9A825
+  FontSize 12
+}
+
+skinparam usecase {
+  BackgroundColor #E8F5E9
+  BorderColor #2E7D32
+  FontSize 12
+}
+
+skinparam database {
+  BackgroundColor #F3E5F5
+  BorderColor #6A1B9A
+  FontSize 12
+}
+
+skinparam ArrowColor #424242
+skinparam ArrowFontSize 10
+
+' Entidades externas
+rectangle "Dueño /\nOperador" as dueno
+rectangle "Cocinero" as cocinero
+rectangle "API del\nClima" as api
+
+' Procesos
+usecase "1.0\nGestionar\nInventario" as p1
+usecase "2.0\nRegistrar\nVenta" as p2
+usecase "3.0\nControlar\nStock" as p3
+usecase "4.0\nConsultar\nClima" as p4
+
+' Almacenes de datos
+database "D1 Inventario" as d1
+database "D2 Ventas" as d2
+database "D3 Eventos" as d3
+
+' Flujos desde entidades externas
+dueno --> p1 : Nuevo producto\nstock inicial
+dueno --> p2 : Datos de venta
+cocinero --> p1 : Consulta de stock
+
+' Flujos hacia entidades externas
+p1 --> cocinero : Ingredientes disponibles
+p3 --> dueno : Alerta de stock bajo
+p3 --> cocinero : Alerta de faltante
+p4 --> dueno : Alerta climática
+
+' Flujos entre procesos y almacenes
+p1 --> d1 : Producto registrado
+p2 --> d1 : Descuenta stock
+d1 --> p2 : Stock actual
+p2 --> d2 : Registro de venta
+d1 --> p3 : Stock actual
+d3 --> p4 : Ubicación del evento
+api --> p4 : Pronóstico meteorológico
+
+@enduml

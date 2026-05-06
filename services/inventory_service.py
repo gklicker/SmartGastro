@@ -1,37 +1,38 @@
-from models.producto import Producto
+from models.product import Product
 
 
 class InventoryService:
-    def __init__(self, producto_repo):
-        self.__producto_repo = producto_repo
+    def __init__(self, product_repo):
+        self.__product_repo = product_repo
 
-    def get_product(self, nombre):
-        return self.__producto_repo.find_by_name(nombre)
+    def get_product(self, name):
+        return self.__product_repo.find_by_name(name)
 
-    def add_product(self, nombre, precio, stock, stock_minimo=5):
-        producto = Producto(nombre, precio, stock, stock_minimo)
-        self.__producto_repo.add(producto)
-        return producto
+    def add_product(self, name, price, stock, min_stock=5):
+        product_id = self.__product_repo.next_id()
+        product = Product(product_id, name, price, stock, min_stock)
+        self.__product_repo.add(product)
+        return product
 
-    def add_stock(self, nombre, cantidad):
-        producto = self.__producto_repo.find_by_name(nombre)
-        if not producto:
-            raise ValueError(f"Producto '{nombre}' no encontrado.")
-        producto.set_stock(producto.get_stock() + cantidad)
-        return producto
+    def add_stock(self, name, quantity):
+        product = self.__product_repo.find_by_name(name)
+        if not product:
+            raise ValueError(f"Producto '{name}' no encontrado.")
+        product.set_stock(product.get_stock() + quantity)
+        return product
 
     def show_inventory(self):
-        productos = self.__producto_repo.get_all()
-        if not productos:
+        products = self.__product_repo.get_all()
+        if not products:
             print("El inventario está vacío.")
             return
         print("\n--- Inventario ---")
-        for producto in productos:
-            print(f"  {producto}")
+        for product in products:
+            print(f"  {product}")
 
     def check_alerts(self):
-        alertas = [p for p in self.__producto_repo.get_all() if p.has_low_stock()]
-        if alertas:
+        alerts = [p for p in self.__product_repo.get_all() if p.has_low_stock()]
+        if alerts:
             print("\nAlerta de stock bajo:")
-            for p in alertas:
+            for p in alerts:
                 print(f"  - {p.get_name()}: {p.get_stock()} unidades")
