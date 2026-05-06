@@ -38,12 +38,12 @@ class ReceiptItem:
 
 
 class Receipt:
-    def __init__(self, id, foodtruck_id, cashier_id, payment_method, event_id=None):
+    def __init__(self, id, foodtruck_id, cashier_id, payment_method, event=None):
         self.__id = id
         self.__foodtruck_id = foodtruck_id
         self.__cashier_id = cashier_id
         self.__payment_method = payment_method
-        self.__event_id = event_id
+        self.__event = event # Can be object or ID
         self.__status = ReceiptStatus.OPEN
         self.__items = []
         self.__created_at = datetime.now()
@@ -54,7 +54,9 @@ class Receipt:
             raise ValueError("No se puede agregar items a un ticket cerrado.")
         if quantity <= 0:
             raise ValueError("La cantidad debe ser mayor a cero.")
-        if not menu_item.is_active():
+        # MenuItem or Product object should have is_active or we assume True for now
+        active = getattr(menu_item, 'is_active', lambda: True)()
+        if not active:
             raise ValueError(f"El plato '{menu_item.get_name()}' no está disponible.")
         self.__items.append(ReceiptItem(menu_item, quantity, menu_item.get_price()))
 
@@ -67,8 +69,8 @@ class Receipt:
         self.__closed_at = datetime.now()
 
     def cancel(self):
-        if self.__status != ReceiptStatus.OPEN:
-            raise ValueError("Solo se pueden cancelar tickets abiertos.")
+        if self.__status == ReceiptStatus.CLOSED:
+             raise ValueError("No se puede cancelar un ticket ya cerrado.")
         self.__status = ReceiptStatus.CANCELLED
 
     def get_id(self):
@@ -80,8 +82,8 @@ class Receipt:
     def get_cashier_id(self):
         return self.__cashier_id
 
-    def get_event_id(self):
-        return self.__event_id
+    def get_event(self):
+        return self.__event
 
     def get_status(self):
         return self.__status
@@ -102,4 +104,15 @@ class Receipt:
         return self.__closed_at
 
     def __str__(self):
-        return f"Ticket #{self.__id} - {self.__status.value} - ${self.get_total():.2f}"
+        status_text = " [ANULADO]" if self.__status == ReceiptStatus.CANCELLED else ""
+        date_str = self.__created_at.strftime("%Y-%m-%d %H:%M")
+        event_name = self.__event.get_name() if hasattr(self.__event, 'get_name') else str(self.__event)
+        
+        lines = [
+            f"\nTicket #{self.__id}{status_text} | {date_str} | Evento: {event_name}",
+            "  Productos:"
+        ]
+        for item in self.__items:
+            lines.append(f"    {item}")
+        lines.append(f"  Total: ${self.get_total():.2f}")
+        return "\n".join(lines)

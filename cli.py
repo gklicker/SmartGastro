@@ -1,13 +1,16 @@
 from external.weather import geocode
-from repository.in_memory import EventoRepository, ProductoRepository, VentaRepository
-from services import InventoryService, SaleService
+from repository.in_memory.product_repository import ProductRepository
+from repository.in_memory.receipt_repository import ReceiptRepository
+from repository.in_memory.event_repository import EventRepository
+from services.inventory_service import InventoryService
+from services.sale_service import SaleService
 
-producto_repo = ProductoRepository()
-venta_repo = VentaRepository()
-evento_repo = EventoRepository()
+product_repo = ProductRepository()
+receipt_repo = ReceiptRepository()
+event_repo = EventRepository()
 
-inventory = InventoryService(producto_repo)
-sales = SaleService(producto_repo, venta_repo, evento_repo)
+inventory = InventoryService(product_repo)
+sales = SaleService(product_repo, receipt_repo, event_repo)
 
 
 def menu_agregar_producto():
@@ -47,13 +50,13 @@ def menu_agregar_producto():
 
 def menu_registrar_venta():
     print("\n--- Registrar venta ---")
-    eventos = evento_repo.get_all()
+    eventos = event_repo.get_all()
     if not eventos:
         print("✗ No hay eventos registrados. Creá un evento primero.")
         return
     print("Eventos disponibles:")
     for e in eventos:
-        print(f"  - {e}")
+        print(f"  - {e.get_name()}")
     nombre_evento = input("Nombre del evento: ").strip()
 
     items = []

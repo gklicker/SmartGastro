@@ -6,8 +6,12 @@ class ReceiptRepository:
         self.__receipts = []
 
     def save(self, receipt):
-        self.__receipts.append(receipt)
+        if receipt not in self.__receipts:
+            self.__receipts.append(receipt)
         return receipt
+
+    def add(self, receipt):
+        return self.save(receipt)
 
     def find_by_id(self, id):
         for r in self.__receipts:
@@ -25,8 +29,11 @@ class ReceiptRepository:
         return sum(
             r.get_total()
             for r in self.__receipts
-            if r.get_event_id() == event_id and r.get_status() == ReceiptStatus.CLOSED
+            if r.get_event() == event_id and r.get_status() == ReceiptStatus.CLOSED
         )
 
-    def list_all(self):
+    def get_all(self):
         return list(self.__receipts)
+
+    def list_all(self):
+        return self.get_all()

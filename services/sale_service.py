@@ -1,44 +1,54 @@
-from models.evento import Evento
-from models.venta import Venta
-from models.detalle_venta import DetalleVenta
+from models.event import Event
+from models.receipt import Receipt, PaymentMethod
 from external.weather import format_forecast
+from datetime import datetime
 
 
 class SaleService:
-    def __init__(self, producto_repo, venta_repo, evento_repo):
-        self.__producto_repo = producto_repo
-        self.__venta_repo = venta_repo
-        self.__evento_repo = evento_repo
+    def __init__(self, product_repo, receipt_repo, event_repo):
+        self.__product_repo = product_repo
+        self.__receipt_repo = receipt_repo
+        self.__event_repo = event_repo
 
-    def create_event(self, nombre, ubicacion, fecha, latitud, longitud):
-        pronostico = format_forecast(latitud, longitud)
-        evento = Evento(nombre, ubicacion, fecha, pronostico)
-        self.__evento_repo.add(evento)
-        print(f"✓ Evento creado: {evento}")
-        return evento
+    def create_event(self, name, address, date, latitude, longitude):
+        # We assume one day event for simplicity in CLI
+        date_start = datetime.strptime(date, "%Y-%m-%d")
+        date_end = date_start # Same day
+        
+        forecast = format_forecast(latitude, longitude)
+        event_id = self.__event_repo.next_id()
+        # created_by=1 as default for CLI
+        event = Event(event_id, name, address, date_start, date_end, 1, forecast)
+        self.__event_repo.add(event)
+        print(f"✓ Evento creado: {event}")
+        return event
 
-    def register_sale(self, nombre_evento, items):
-        evento = self.__evento_repo.find_by_name(nombre_evento)
-        if not evento:
-            raise ValueError(f"Evento '{nombre_evento}' no encontrado.")
+    def register_sale(self, event_name, items):
+        event = self.__event_repo.find_by_name(event_name)
+        if not event:
+            raise ValueError(f"Evento '{event_name}' no encontrado.")
 
-        venta = Venta(evento)
+        # For CLI, we use a simple Receipt
+        # foodtruck_id=1, cashier_id=1, payment_method=CASH as defaults
+        receipt_id = len(self.__receipt_repo.get_all()) + 1
+        receipt = Receipt(receipt_id, 1, 1, PaymentMethod.CASH, event)
 
-        for nombre_producto, cantidad in items:
-            producto = self.__producto_repo.find_by_name(nombre_producto)
-            if not producto:
-                raise ValueError(f"Producto '{nombre_producto}' no encontrado.")
-            producto.deduct_stock(cantidad)
-            venta.add_item(DetalleVenta(producto, cantidad))
+        for product_name, quantity in items:
+            product = self.__product_repo.find_by_name(product_name)
+            if not product:
+                raise ValueError(f"Producto '{product_name}' no encontrado.")
+            product.deduct_stock(quantity)
+            receipt.add_item(product, quantity)
 
-        self.__venta_repo.add(venta)
-        return venta
+        receipt.close()
+        self.__receipt_repo.add(receipt)
+        return receipt
 
     def show_sales(self):
-        ventas = self.__venta_repo.get_all()
-        if not ventas:
+        sales = self.__receipt_repo.get_all()
+        if not sales:
             print("No hay ventas registradas.")
             return
         print("\n--- Historial de ventas ---")
-        for venta in ventas:
-            print(venta)
+        for sale in sales:
+            print(sale)
