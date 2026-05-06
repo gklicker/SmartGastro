@@ -1,0 +1,128 @@
+{
+  "info": {
+    "name": "SmartGastro — API de Clima (Open-Meteo)",
+    "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "description": "Colección de requests a la API pública Open-Meteo utilizada por SmartGastro para obtener el pronóstico del clima antes de confirmar la participación de un foodtruck en una feria o evento al aire libre.\n\nOpen-Meteo es una API gratuita y sin autenticación que devuelve datos meteorológicos por coordenadas geográficas.\n\nURL base: https://api.open-meteo.com/v1/forecast",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Pronóstico del día — Buenos Aires",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://api.open-meteo.com/v1/forecast?latitude=-34.6037&longitude=-58.3816&hourly=temperature_2m,precipitation&forecast_days=1",
+          "protocol": "https",
+          "host": ["api", "open-meteo", "com"],
+          "path": ["v1", "forecast"],
+          "query": [
+            {
+              "key": "latitude",
+              "value": "-34.6037",
+              "description": "Latitud de Buenos Aires"
+            },
+            {
+              "key": "longitude",
+              "value": "-58.3816",
+              "description": "Longitud de Buenos Aires"
+            },
+            {
+              "key": "hourly",
+              "value": "temperature_2m,precipitation",
+              "description": "Variables horarias solicitadas: temperatura a 2 metros y precipitaciones"
+            },
+            {
+              "key": "forecast_days",
+              "value": "1",
+              "description": "Cantidad de días a pronosticar (1 = solo el día de hoy)"
+            }
+          ]
+        },
+        "description": "Obtiene el pronóstico horario de temperatura y precipitaciones para Buenos Aires.\n\nSmartGastro usa esta request al momento de crear un evento: si la lluvia total supera los 5 mm, el sistema advierte al dueño que no es recomendable salir a la feria."
+      },
+      "response": []
+    },
+    {
+      "name": "Pronóstico del día — Córdoba",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://api.open-meteo.com/v1/forecast?latitude=-31.4201&longitude=-64.1888&hourly=temperature_2m,precipitation&forecast_days=1",
+          "protocol": "https",
+          "host": ["api", "open-meteo", "com"],
+          "path": ["v1", "forecast"],
+          "query": [
+            {
+              "key": "latitude",
+              "value": "-31.4201",
+              "description": "Latitud de Córdoba Capital"
+            },
+            {
+              "key": "longitude",
+              "value": "-64.1888",
+              "description": "Longitud de Córdoba Capital"
+            },
+            {
+              "key": "hourly",
+              "value": "temperature_2m,precipitation",
+              "description": "Variables horarias solicitadas: temperatura a 2 metros y precipitaciones"
+            },
+            {
+              "key": "forecast_days",
+              "value": "1",
+              "description": "Cantidad de días a pronosticar"
+            }
+          ]
+        },
+        "description": "Mismo request aplicado a Córdoba Capital. Útil para foodtrucks que operan en el interior del país.\n\nLa lógica de interpretación en SmartGastro es idéntica: se suman las precipitaciones horarias y se clasifica el estado del clima en tres niveles (despejado, lluvia leve, lluvia intensa)."
+      },
+      "response": []
+    },
+    {
+      "name": "Pronóstico extendido — 3 días (Buenos Aires)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://api.open-meteo.com/v1/forecast?latitude=-34.6037&longitude=-58.3816&hourly=temperature_2m,precipitation&forecast_days=3",
+          "protocol": "https",
+          "host": ["api", "open-meteo", "com"],
+          "path": ["v1", "forecast"],
+          "query": [
+            {
+              "key": "latitude",
+              "value": "-34.6037",
+              "description": "Latitud de Buenos Aires"
+            },
+            {
+              "key": "longitude",
+              "value": "-58.3816",
+              "description": "Longitud de Buenos Aires"
+            },
+            {
+              "key": "hourly",
+              "value": "temperature_2m,precipitation",
+              "description": "Variables horarias: temperatura y precipitaciones"
+            },
+            {
+              "key": "forecast_days",
+              "value": "3",
+              "description": "Pronóstico a 3 días para planificar eventos de fin de semana"
+            }
+          ]
+        },
+        "description": "Variante con forecast_days=3 para planificación anticipada de eventos de varios días (ej. ferias de fin de semana).\n\nEsta modalidad está prevista para la segunda entrega del sistema, donde el dueño podrá visualizar el clima de los próximos días desde el dashboard web."
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://api.open-meteo.com/v1",
+      "description": "URL base de la API Open-Meteo"
+    }
+  ]
+}
