@@ -1,11 +1,11 @@
-import hashlib
+import bcrypt
 from db import get_db
 
 
 class UserRepository:
 
     def create(self, login, password, full_name, role_name):
-        pw_hash = hashlib.sha256(password.encode()).hexdigest()
+        pw_hash = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
         with get_db() as conn:
             with conn.cursor() as cur:
                 cur.execute("SELECT id FROM roles WHERE name = %s", (role_name,))
@@ -109,5 +109,4 @@ class UserRepository:
                 cur.execute("DELETE FROM users WHERE id = %s", (user_id,))
 
     def check_password(self, user_dict, password):
-        pw_hash = hashlib.sha256(password.encode()).hexdigest()
-        return user_dict["password_hash"] == pw_hash
+        return bcrypt.checkpw(password.encode(), user_dict["password_hash"].encode())
