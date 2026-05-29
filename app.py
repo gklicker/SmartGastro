@@ -9,6 +9,7 @@ def create_app():
     app.config["SECRET_KEY"] = Config.SECRET_KEY
     app.config["JWT_SECRET_KEY"] = Config.JWT_SECRET_KEY
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = Config.JWT_ACCESS_TOKEN_EXPIRES
+    app.config["JWT_REFRESH_TOKEN_EXPIRES"] = Config.JWT_REFRESH_TOKEN_EXPIRES
 
     jwt = JWTManager(app)
 
