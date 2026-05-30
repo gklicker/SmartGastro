@@ -10,7 +10,7 @@ ing_repo = IngredientRepository()
 @bp.post("/")
 @require_roles("owner", "cook")
 def create():
-    data = request.get_json(silent=True) or {}
+    data = request.json or {}
     if not data.get("nombre") or data.get("precio") is None:
         return error("Campos requeridos: nombre, precio.", 400, 4001)
     if float(data["precio"]) < 0:
@@ -44,7 +44,7 @@ def get_one(item_id):
 def update(item_id):
     if not repo.find_by_id(item_id):
         return error(f"Plato #{item_id} no encontrado.", 404, 4041)
-    data = request.get_json(silent=True) or {}
+    data = request.json or {}
     if "precio" in data and float(data["precio"]) < 0:
         return error("El precio no puede ser negativo.", 422, 4221)
     return success(repo.update(item_id, data))
@@ -55,7 +55,7 @@ def update(item_id):
 def add_ingredient(item_id):
     if not repo.find_by_id(item_id):
         return error(f"Plato #{item_id} no encontrado.", 404, 4041)
-    data = request.get_json(silent=True) or {}
+    data = request.json or {}
     if not data.get("ingrediente_id") or not data.get("cantidad"):
         return error("Campos requeridos: ingrediente_id, cantidad.", 400, 4001)
     if not ing_repo.find_by_id(data["ingrediente_id"]):

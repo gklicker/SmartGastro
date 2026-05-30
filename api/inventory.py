@@ -21,7 +21,7 @@ def get_stock(ft_id):
 def add_stock(ft_id):
     if not ft_repo.find_by_id(ft_id):
         return error(f"Foodtruck #{ft_id} no encontrado.", 404, 4041)
-    data = request.get_json(silent=True) or {}
+    data = request.json or {}
     if not data.get("ingrediente_id") or not data.get("cantidad"):
         return error("Campos requeridos: ingrediente_id, cantidad.", 400, 4001)
     if not ing_repo.find_by_id(data["ingrediente_id"]):

@@ -9,7 +9,7 @@ repo = FoodtruckRepository()
 @bp.post("/")
 @require_roles("owner")
 def create():
-    data = request.get_json(silent=True) or {}
+    data = request.json or {}
     if not data.get("nombre"):
         return error("Campo requerido: nombre.", 400, 4001)
     ft = repo.create(data["nombre"], data.get("patente"), data.get("descripcion", ""))
@@ -40,13 +40,13 @@ def get_one(ft_id):
 def update(ft_id):
     if not repo.find_by_id(ft_id):
         return error(f"Foodtruck #{ft_id} no encontrado.", 404, 4041)
-    return success(repo.update(ft_id, request.get_json(silent=True) or {}))
+    return success(repo.update(ft_id, request.json or {}))
 
 
 @bp.post("/<int:ft_id>/staff")
 @require_roles("owner")
 def add_staff(ft_id):
-    data = request.get_json(silent=True) or {}
+    data = request.json or {}
     if not data.get("usuario_id"):
         return error("Campo requerido: usuario_id.", 400, 4001)
     try:

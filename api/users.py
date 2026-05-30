@@ -10,7 +10,7 @@ repo = UserRepository()
 @bp.post("/")
 @require_roles("owner")
 def create():
-    data = request.get_json(silent=True) or {}
+    data = request.json or {}
     required = ("login", "password", "full_name", "role")
     if not all(data.get(k) for k in required):
         return error("Campos requeridos: login, password, full_name, role.", 400, 4001)
@@ -52,7 +52,7 @@ def get_one(user_id):
 def update(user_id):
     if not repo.find_by_id(user_id):
         return error(f"Usuario #{user_id} no encontrado.", 404, 4041)
-    data = request.get_json(silent=True) or {}
+    data = request.json or {}
     try:
         user = repo.update(user_id, data)
         user.pop("password_hash", None)

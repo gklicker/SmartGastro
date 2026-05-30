@@ -9,7 +9,7 @@ repo = IngredientRepository()
 @bp.post("/")
 @require_roles("owner", "cook")
 def create():
-    data = request.get_json(silent=True) or {}
+    data = request.json or {}
     if not data.get("nombre") or not data.get("unidad"):
         return error("Campos requeridos: nombre, unidad.", 400, 4001)
     ing = repo.create(data["nombre"], data["unidad"], data.get("stock_minimo_alerta", 0))
@@ -40,7 +40,7 @@ def get_one(ing_id):
 def update(ing_id):
     if not repo.find_by_id(ing_id):
         return error(f"Ingrediente #{ing_id} no encontrado.", 404, 4041)
-    ing = repo.update(ing_id, request.get_json(silent=True) or {})
+    ing = repo.update(ing_id, request.json or {})
     return success(ing)
 
 

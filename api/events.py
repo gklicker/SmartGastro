@@ -10,7 +10,7 @@ repo = EventRepository()
 @bp.post("/")
 @require_roles("owner", "seller")
 def create():
-    data = request.get_json(silent=True) or {}
+    data = request.json or {}
     required = ("nombre", "localidad", "fecha_inicio", "fecha_fin", "creado_por")
     if not all(data.get(k) for k in required):
         return error(f"Campos requeridos: {', '.join(required)}.", 400, 4001)
@@ -63,7 +63,7 @@ def update(event_id):
         return error(f"Evento #{event_id} no encontrado.", 404, 4041)
     if event["status"] != "planned":
         return error("Solo se pueden editar eventos en estado 'planned'.", 422, 4222)
-    return success(repo.update(event_id, request.get_json(silent=True) or {}))
+    return success(repo.update(event_id, request.json or {}))
 
 
 @bp.patch("/<int:event_id>/iniciar")
@@ -98,7 +98,7 @@ def cancel(event_id):
         return error(f"Evento #{event_id} no encontrado.", 404, 4041)
     if event["status"] == "completed":
         return error("No se puede cancelar un evento completado.", 422, 4223)
-    data = request.get_json(silent=True) or {}
+    data = request.json or {}
     repo.update_status(
         event_id, "cancelled",
         cancellation_reason=data.get("motivo"),

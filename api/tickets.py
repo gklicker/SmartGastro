@@ -10,7 +10,7 @@ menu_repo = MenuItemRepository()
 @bp.post("/")
 @require_roles("cashier", "seller")
 def create():
-    data = request.get_json(silent=True) or {}
+    data = request.json or {}
     required = ("foodtruck_id", "cajero_id", "medio_pago")
     if not all(data.get(k) for k in required):
         return error(f"Campos requeridos: {', '.join(required)}.", 400, 4001)
@@ -29,7 +29,7 @@ def create():
 @bp.post("/<int:ticket_id>/items")
 @require_roles("cashier", "seller")
 def add_item(ticket_id):
-    data = request.get_json(silent=True) or {}
+    data = request.json or {}
     if not data.get("menu_item_id") or not data.get("cantidad"):
         return error("Campos requeridos: menu_item_id, cantidad.", 400, 4001)
     item = menu_repo.find_by_id(data["menu_item_id"])
@@ -44,7 +44,7 @@ def add_item(ticket_id):
 @bp.post("/<int:ticket_id>/items/batch")
 @require_roles("cashier", "seller")
 def add_items_batch(ticket_id):
-    data = request.get_json(silent=True) or {}
+    data = request.json or {}
     items_data = data.get("items", [])
     if not items_data:
         return error("Se requiere al menos un item en 'items'.", 400, 4001)
