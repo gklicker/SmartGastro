@@ -5,6 +5,7 @@
 <section class="panel">
   <h2>Agregar ingrediente</h2>
   <form method="post" class="form-grid">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <label>Icono<select name="icon" class="icon-select">{% for icon in icon_catalog %}<option value="{{ icon }}">{{ icon }}</option>{% endfor %}</select></label>
     <label>Nombre<input name="name" required></label>
     <label>Unidad<select name="unit" required>{% for unit in unit_catalog %}<option value="{{ unit }}">{{ unit }}</option>{% endfor %}</select></label>
@@ -18,6 +19,7 @@
   <h2>Registrar ingreso</h2>
   <p class="muted">Ingresá la cantidad recibida. El stock actual se actualizará automáticamente.</p>
   <form id="stock-receipt-form" method="post" class="receipt-grid">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <label>Ingrediente
       <select id="receipt-ingredient" required>
         <option value="">Seleccionar</option>
@@ -43,8 +45,8 @@
           <td><input form="ingredient-{{ item.id }}" name="min_stock" type="number" min="0" step="0.01" value="{{ item.min_stock }}" required></td>
           <td>{% if item.low_stock %}<span class="badge danger">Bajo</span>{% else %}<span class="badge success">OK</span>{% endif %}</td>
           <td class="actions">
-            <form id="ingredient-{{ item.id }}" method="post" action="{{ url_for('edit_ingredient', ingredient_id=item.id) }}"><button class="small">Guardar</button></form>
-            <form method="post" action="{{ url_for('delete_ingredient', ingredient_id=item.id) }}"><button class="small ghost" onclick="return confirm('¿Eliminar ingrediente?')">Eliminar</button></form>
+            <form id="ingredient-{{ item.id }}" method="post" action="{{ url_for('edit_ingredient', ingredient_id=item.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="small">Guardar</button></form>
+            <form method="post" action="{{ url_for('delete_ingredient', ingredient_id=item.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="small ghost" onclick="return confirm('¿Eliminar ingrediente?')">Eliminar</button></form>
           </td>
       </tr>
     {% else %}<tr><td colspan="7">Todavía no hay ingredientes.</td></tr>{% endfor %}

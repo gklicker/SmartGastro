@@ -208,9 +208,13 @@ form.addEventListener("submit", async (event) => {
     quantity: item.quantity
   }));
   try {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
     const response = await fetch("{{ url_for('create_sale') }}", {
       method: "POST",
-      headers: {"Content-Type": "application/json"},
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": csrfToken
+      },
       body: JSON.stringify(values)
     });
     const data = await response.json();

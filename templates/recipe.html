@@ -8,6 +8,7 @@
 <section class="panel">
   <p>Indicá el consumo exacto de cada ingrediente para una porción.</p>
   <form method="post" class="stack">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="recipe-grid">
     {% for ingredient in ingredients %}
       <label>

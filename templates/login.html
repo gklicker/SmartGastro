@@ -6,6 +6,7 @@
   <h1>Bienvenido a SmartGastro</h1>
   <p>Ingresá para administrar stock, menú y ventas.</p>
   <form method="post" class="stack">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <label>Usuario<input name="login" required autocomplete="username"></label>
     <label>Contraseña<input name="password" type="password" required autocomplete="current-password"></label>
     <button type="submit">Ingresar</button>

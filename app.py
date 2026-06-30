@@ -15,6 +15,7 @@ from flask import (
     session,
     url_for,
 )
+from flask_wtf.csrf import CSRFProtect
 from sqlalchemy import inspect, text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
@@ -40,6 +41,8 @@ from web_models import (
 
 load_dotenv()
 
+csrf = CSRFProtect()
+
 ICONS = [
     "📦", "🥯", "🥩", "🍗", "🧀", "🥬", "🍅", "🧅", "🥒", "🥔",
     "🍟", "🥫", "🧂", "🥚", "🥛", "🧃", "🥤", "☕", "🍔", "🌭",
@@ -50,16 +53,27 @@ UNITS = ["u", "g", "kg", "ml", "l"]
 
 def create_app(test_config=None):
     app = Flask(__name__)
+    secret_key = os.getenv("SECRET_KEY")
+    if not secret_key and not (test_config and test_config.get("SECRET_KEY")):
+        raise RuntimeError(
+            "SECRET_KEY no está configurado. Definilo en el archivo .env "
+            "antes de iniciar la aplicación."
+        )
     app.config.update(
-        SECRET_KEY=os.getenv("SECRET_KEY", "change-me-in-production"),
+        SECRET_KEY=secret_key or "test-only",
         SQLALCHEMY_DATABASE_URI=os.getenv(
             "DATABASE_URL", "sqlite:///smartgastro.db"
         ),
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
+        SESSION_COOKIE_HTTPONLY=True,
+        SESSION_COOKIE_SAMESITE="Lax",
+        SESSION_COOKIE_SECURE=os.getenv("SESSION_COOKIE_SECURE", "0") == "1",
+        WTF_CSRF_TIME_LIMIT=None,
     )
     if test_config:
         app.config.update(test_config)
     db.init_app(app)
+    csrf.init_app(app)
 
     def ensure_schema():
         """Pequeña migración compatible con la base creada por la primera versión web."""
@@ -658,8 +672,6 @@ def create_app(test_config=None):
     return app
 
 
-app = create_app()
-
-
 if __name__ == "__main__":
+    app = create_app()
     app.run(debug=os.getenv("FLASK_DEBUG", "0") == "1")

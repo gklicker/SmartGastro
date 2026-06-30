@@ -21,6 +21,7 @@ class SmartGastroWebTest(unittest.TestCase):
                 "TESTING": True,
                 "SECRET_KEY": "test-secret",
                 "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
+                "WTF_CSRF_ENABLED": False,
             }
         )
         self.context = self.app.app_context()
