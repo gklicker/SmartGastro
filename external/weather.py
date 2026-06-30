@@ -1,8 +1,15 @@
+import os
 import requests
 from datetime import date, datetime
 
-BASE_URL = "https://api.open-meteo.com/v1/forecast"
-GEOCODING_URL = "https://geocoding-api.open-meteo.com/v1/search"
+BASE_URL = os.getenv(
+    "OPEN_METEO_FORECAST_URL",
+    "https://api.open-meteo.com/v1/forecast",
+)
+GEOCODING_URL = os.getenv(
+    "OPEN_METEO_GEOCODING_URL",
+    "https://geocoding-api.open-meteo.com/v1/search",
+)
 
 
 def geocode(location_name):

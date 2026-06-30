@@ -1,4 +1,4 @@
-import hashlib
+import bcrypt
 from models.role import Role
 
 
@@ -8,7 +8,10 @@ class User:
             raise ValueError(f"Rol inválido: {role}")
         self.__id = id
         self.__login = login
-        self.__password_hash = hashlib.sha256(password.encode()).hexdigest()
+        self.__password_hash = bcrypt.hashpw(
+            password.encode("utf-8"),
+            bcrypt.gensalt(),
+        )
         self.__full_name = full_name
         self.__role = role
         self.__active = True
@@ -32,7 +35,7 @@ class User:
         self.__active = False
 
     def check_password(self, password):
-        return self.__password_hash == hashlib.sha256(password.encode()).hexdigest()
+        return bcrypt.checkpw(password.encode("utf-8"), self.__password_hash)
 
     def __str__(self):
         estado = "activo" if self.__active else "inactivo"

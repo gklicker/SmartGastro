@@ -65,6 +65,10 @@ pip install -r requirements.txt
 Copiar `.env.example` como `.env` y reemplazar `SECRET_KEY` por un valor
 privado. El archivo `.env` nunca debe subirse al repositorio.
 
+Las URLs de Open-Meteo también se configuran mediante
+`OPEN_METEO_FORECAST_URL` y `OPEN_METEO_GEOCODING_URL`. Los valores públicos
+predeterminados están incluidos en `.env.example`.
+
 ### 5. Crear la base y el usuario de demostración
 
 ```bash
@@ -109,8 +113,9 @@ de demostración ni la base local:
 python -m unittest discover -s tests -v
 ```
 
-Cubren autenticación, rutas protegidas, inventario, ingresos de mercadería,
-ventas, descuento de stock, rollback, alertas y formato argentino de fecha.
+Cubren autenticación, Bcrypt con salt, configuración del clima, rutas
+protegidas, inventario, ingresos de mercadería, ventas, descuento de stock,
+rollback, alertas y formato argentino de fecha.
 
 ## Credenciales de prueba
 

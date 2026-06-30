@@ -1,4 +1,62 @@
-# SmartGastro — Diseño de API REST (Production Ready)
+# SmartGastro — Matriz de API y rutas web
+
+## Contrato implementado en la entrega actual
+
+Esta tabla documenta el comportamiento real de `app.py`. Las rutas de
+formularios responden con una redirección `302` después de una operación para
+evitar el reenvío del formulario al actualizar la página. La venta es la
+operación REST asíncrona consumida por `fetch()`.
+
+| Operación | Método | Ruta | Éxito | Casos límite |
+|---|---|---|---|---|
+| Ver login | `GET` | `/login` | `200 OK` | — |
+| Iniciar sesión | `POST` | `/login` | `302 Found` hacia dashboard | `200 OK` mostrando error si las credenciales son inválidas |
+| Cerrar sesión | `GET` | `/logout` | `302 Found` hacia login | — |
+| Ver dashboard | `GET` | `/` | `200 OK` | `302 Found` si no hay sesión |
+| Ver inventario | `GET` | `/ingredients` | `200 OK` | `302 Found` si no hay sesión |
+| Crear ingrediente | `POST` | `/ingredients` | `302 Found` | `302 Found` con mensaje si hay datos inválidos o duplicados |
+| Editar ingrediente | `POST` | `/ingredients/{id}/edit` | `302 Found` | `404 Not Found` si no existe |
+| Registrar ingreso | `POST` | `/ingredients/{id}/receive` | `302 Found` | `302 Found` con error si la cantidad no es positiva; `404` si no existe |
+| Eliminar ingrediente | `POST` | `/ingredients/{id}/delete` | `302 Found` | `404 Not Found` si no existe |
+| Ver menú | `GET` | `/menu` | `200 OK` | `302 Found` si no hay sesión |
+| Crear plato y receta | `POST` | `/menu` | `302 Found` | `302 Found` con error si precio o receta son inválidos |
+| Editar o desactivar plato | `POST` | `/menu/{id}/edit` | `302 Found` | `404 Not Found` si no existe |
+| Editar receta | `GET`, `POST` | `/menu/{id}/recipe` | `200 OK` / `302 Found` | `404` si no existe; `200` con error si la receta es inválida |
+| Eliminar plato | `POST` | `/menu/{id}/delete` | `302 Found` | `302 Found` con error si tiene ventas; `404` si no existe |
+| Ver ventas | `GET` | `/sales` | `200 OK` | `302 Found` si no hay sesión |
+| Registrar venta | `POST` JSON | `/api/sales` | `201 Created` | `400 Bad Request` por JSON, cantidad, receta o stock; `500 Internal Server Error` por persistencia; `302 Found` si no hay sesión |
+
+### Contrato de `POST /api/sales`
+
+Body:
+
+```json
+{
+  "items": [
+    {"menu_item_id": 1, "quantity": 2},
+    {"menu_item_id": 4, "quantity": 1}
+  ],
+  "payment_method": "card"
+}
+```
+
+Respuestas:
+
+- `201 Created`: venta registrada, total calculado y stock descontado.
+- `400 Bad Request`: ticket vacío, cantidad inválida, plato inactivo, receta
+  inexistente o stock insuficiente.
+- `500 Internal Server Error`: error de base de datos; la transacción se
+  revierte con `rollback`.
+- `302 Found`: usuario no autenticado; se redirige al login.
+
+La desactivación de un plato se realiza actualmente mediante
+`POST /menu/{id}/edit`: si la operación es válida devuelve `302 Found` hacia el
+menú. El `200 OK` indicado en el diseño REST de abajo corresponde al contrato
+futuro de `PATCH /api/v1/menu/{id}/desactivar`, no a la ruta web actual.
+
+---
+
+## Diseño REST propuesto para evolución a producción
 
 Diseño de endpoints para la segunda entrega del sistema, donde la aplicación de consola migrará a una arquitectura web con Flask y una API REST consumida desde el frontend.
 
