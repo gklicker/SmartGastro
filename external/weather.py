@@ -1,6 +1,10 @@
+import logging
 import os
-import requests
 from datetime import date, datetime
+from functools import lru_cache
+from json import JSONDecodeError
+
+import requests
 
 BASE_URL = os.getenv(
     "OPEN_METEO_FORECAST_URL",
@@ -11,21 +15,60 @@ GEOCODING_URL = os.getenv(
     "https://geocoding-api.open-meteo.com/v1/search",
 )
 
+logger = logging.getLogger("smartgastro.weather")
 
+
+def _first(values, default=0):
+    """Devuelve el primer elemento de una lista o el default si está vacía/None."""
+    if not values:
+        return default
+    head = values[0]
+    return default if head is None else head
+
+
+def _at(values, index, default=None):
+    """Acceso seguro por índice; devuelve default si la lista no alcanza."""
+    if not values or index is None or index >= len(values):
+        return default
+    return values[index] if values[index] is not None else default
+
+
+def _safe_json(response):
+    try:
+        return response.json()
+    except (JSONDecodeError, ValueError) as exc:
+        logger.error("Open-Meteo respondió con JSON inválido: %s", exc)
+        raise ValueError("El servicio climático devolvió una respuesta inválida.")
+
+
+@lru_cache(maxsize=128)
 def geocode(location_name):
     """Convierte un nombre de localidad a coordenadas (lat, lon).
+    Resultados cacheados en memoria para reducir llamadas externas.
     Lanza ValueError si no se encuentra la localidad."""
+    if not location_name or not location_name.strip():
+        raise ValueError("La localidad no puede estar vacía.")
     response = requests.get(
         GEOCODING_URL,
         params={"name": location_name, "count": 1, "language": "es"},
         timeout=5,
     )
     response.raise_for_status()
-    results = response.json().get("results")
+    data = _safe_json(response)
+    results = data.get("results") or []
     if not results:
         raise ValueError(f"No se encontró la localidad: '{location_name}'")
     result = results[0]
-    return result["latitude"], result["longitude"], result["name"], result.get("country", "")
+    try:
+        return (
+            float(result["latitude"]),
+            float(result["longitude"]),
+            result["name"],
+            result.get("country", ""),
+        )
+    except (KeyError, TypeError, ValueError) as exc:
+        logger.error("Respuesta de geocoding incompleta: %s", result)
+        raise ValueError("La localidad no devolvió coordenadas válidas.") from exc
 
 
 def get_forecast(latitude, longitude):
@@ -38,7 +81,7 @@ def get_forecast(latitude, longitude):
 
     response = requests.get(BASE_URL, params=params, timeout=5)
     response.raise_for_status()
-    return response.json()
+    return _safe_json(response)
 
 
 def get_forecast_for_date(latitude, longitude, target_date, target_time=None):
@@ -65,32 +108,35 @@ def get_forecast_for_date(latitude, longitude, target_date, target_time=None):
     }
     response = requests.get(BASE_URL, params=params, timeout=7)
     response.raise_for_status()
-    data = response.json()
-    daily = data.get("daily", {})
+    data = _safe_json(response)
+    daily = data.get("daily") or {}
     if not daily.get("time"):
         raise ValueError("No hay pronóstico disponible para esa fecha.")
 
     result = {
         "date": target_date.isoformat(),
-        "rain_mm": daily.get("precipitation_sum", [0])[0] or 0,
-        "rain_probability": daily.get("precipitation_probability_max", [0])[0] or 0,
-        "temp_max": daily.get("temperature_2m_max", [None])[0],
-        "temp_min": daily.get("temperature_2m_min", [None])[0],
+        "rain_mm": _first(daily.get("precipitation_sum"), 0),
+        "rain_probability": _first(daily.get("precipitation_probability_max"), 0),
+        "temp_max": _first(daily.get("temperature_2m_max"), None),
+        "temp_min": _first(daily.get("temperature_2m_min"), None),
         "time": target_time,
     }
 
     if target_time:
-        target_hour = datetime.combine(
-            target_date, datetime.strptime(target_time, "%H:%M").time()
-        ).replace(minute=0)
+        try:
+            parsed_time = datetime.strptime(target_time, "%H:%M").time()
+        except ValueError as exc:
+            raise ValueError("El horario debe tener formato HH:MM.") from exc
+        target_hour = datetime.combine(target_date, parsed_time).replace(minute=0)
         hour_key = target_hour.isoformat(timespec="minutes")
-        hourly = data.get("hourly", {})
-        if hour_key in hourly.get("time", []):
-            index = hourly["time"].index(hour_key)
-            result["hour_temp"] = hourly.get("temperature_2m", [None])[index]
-            result["hour_rain_mm"] = hourly.get("precipitation", [0])[index] or 0
-            result["hour_rain_probability"] = (
-                hourly.get("precipitation_probability", [0])[index] or 0
+        hourly = data.get("hourly") or {}
+        times = hourly.get("time") or []
+        if hour_key in times:
+            index = times.index(hour_key)
+            result["hour_temp"] = _at(hourly.get("temperature_2m"), index)
+            result["hour_rain_mm"] = _at(hourly.get("precipitation"), index, 0)
+            result["hour_rain_probability"] = _at(
+                hourly.get("precipitation_probability"), index, 0
             )
 
     if result.get("hour_rain_probability", result["rain_probability"]) >= 50 or result.get(
@@ -107,11 +153,11 @@ def get_forecast_for_date(latitude, longitude, target_date, target_time=None):
 def get_daily_summary(latitude, longitude):
     data = get_forecast(latitude, longitude)
 
-    hourly = data.get("hourly", {})
-    precipitaciones = hourly.get("precipitation", [])
-    temperaturas = hourly.get("temperature_2m", [])
+    hourly = data.get("hourly") or {}
+    precipitaciones = hourly.get("precipitation") or []
+    temperaturas = hourly.get("temperature_2m") or []
 
-    total_lluvia = sum(precipitaciones)
+    total_lluvia = sum(value for value in precipitaciones if value is not None)
     temp_max = max(temperaturas) if temperaturas else None
     temp_min = min(temperaturas) if temperaturas else None
 
@@ -138,7 +184,8 @@ def format_forecast(latitude, longitude):
             f"Lluvia: {resumen['lluvia_total_mm']} mm | "
             f"Temp: {resumen['temp_min']}°C - {resumen['temp_max']}°C"
         )
-    except requests.RequestException:
+    except (requests.RequestException, ValueError) as exc:
+        logger.warning("format_forecast falló: %s", exc)
         return "Sin datos de clima (error de conexión)"
 
 
