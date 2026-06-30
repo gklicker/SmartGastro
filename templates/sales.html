@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+{% block title %}Ventas · SmartGastro{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">Caja y análisis</p><h1>Ventas</h1></div></div>
+
+<section class="stats">
+  <article><span>Ventas totales</span><strong id="total-sales">{{ stats.count }}</strong></article>
+  <article><span>Ingresos totales</span><strong id="total-revenue">${{ "%.2f"|format(stats.revenue) }}</strong></article>
+  <article><span>Ticket promedio</span><strong id="average-ticket">${{ "%.2f"|format(stats.average) }}</strong></article>
+</section>
+
+<section class="grid-two">
+  <article class="panel">
+    <p class="eyebrow">Caja</p>
+    <h2>Registrar nueva venta</h2>
+    <form id="sale-form" class="stack">
+      <div class="sale-item-entry">
+        <label>Plato<select id="sale-item"><option value="">Seleccionar</option>{% for item in menu_items %}<option value="{{ item.id }}" data-name="{{ item.name }}" data-icon="{{ item.icon }}" data-price="{{ item.price }}">{{ item.icon }} {{ item.name }} · ${{ "%.2f"|format(item.price) }}</option>{% endfor %}</select></label>
+        <label>Cantidad<input id="sale-quantity" type="number" min="1" value="1"></label>
+        <button id="add-sale-item" type="button">Agregar al ticket</button>
+      </div>
+      <div class="cart-wrap">
+        <table class="cart-table">
+          <thead><tr><th>Producto</th><th>Cantidad</th><th>Subtotal</th><th></th></tr></thead>
+          <tbody id="sale-cart"><tr class="empty-cart"><td colspan="4">Todavía no agregaste productos.</td></tr></tbody>
+        </table>
+        <p class="cart-total">Total: <strong id="cart-total">$0.00</strong></p>
+      </div>
+      <label>Medio de pago<select name="payment_method"><option value="cash">Efectivo</option><option value="card">Tarjeta</option><option value="mercadopago">Mercado Pago</option></select></label>
+      <button type="submit">Registrar venta</button>
+    </form>
+  </article>
+  <article id="sale-result" class="panel sale-confirmation empty" aria-live="polite">
+    <p class="eyebrow">Confirmación</p>
+    <h2>Esperando una nueva venta</h2>
+    <p class="muted">Después de registrar la venta, la confirmación y sus datos aparecerán aquí.</p>
+  </article>
+</section>
+
+<section class="panel">
+  <h2>Productos más vendidos</h2>
+  <ol id="top-items" class="ranking">{% for name, quantity in stats.top_items %}<li><span>{{ name }}</span><strong>{{ quantity }} u.</strong></li>{% else %}<li class="muted">Sin datos para estos filtros.</li>{% endfor %}</ol>
+  {% if stats.unsold_items %}
+    <h3>Sin ventas en el período seleccionado</h3>
+    <p class="muted">{% for item in stats.unsold_items %}{{ item.icon }} {{ item.name }}{% if not loop.last %}, {% endif %}{% endfor %}</p>
+  {% endif %}
+</section>
+
+<section class="panel table-wrap">
+  <h2>Historial de ventas</h2>
+  <form method="get" class="filter-grid sales-filters">
+    <label>Producto<select name="menu_item_id"><option value="">Todos</option>{% for item in menu_items %}<option value="{{ item.id }}" {% if filters.menu_item_id == item.id %}selected{% endif %}>{{ item.icon }} {{ item.name }}</option>{% endfor %}</select></label>
+    <label>Desde<input name="date_from" type="date" value="{{ filters.date_from }}"></label>
+    <label>Hasta<input name="date_to" type="date" value="{{ filters.date_to }}"></label>
+    <label>Mes<input name="month" type="month" value="{{ filters.month }}"></label>
+    <button type="submit">Aplicar filtros</button>
+    <a class="button-link secondary" href="{{ url_for('sales') }}">Limpiar</a>
+  </form>
+  <table>
+    <thead><tr><th>Ticket</th><th>Fecha</th><th>Productos</th><th>Pago</th><th>Total</th></tr></thead>
+    <tbody id="sales-history">{% for receipt in receipts %}
+      <tr>
+        <td>#{{ receipt.id }}</td>
+        <td>{{ receipt.created_at.strftime("%d/%m/%Y %H:%M") }}</td>
+        <td>{% for line in receipt.items %}{{ line.menu_item.icon }} {{ line.menu_item.name }} × {{ line.quantity }}{% if not loop.last %}<br>{% endif %}{% endfor %}</td>
+        <td>{{ receipt.payment_method }}</td>
+        <td><strong>${{ "%.2f"|format(receipt.total_amount) }}</strong></td>
+      </tr>
+    {% else %}<tr><td colspan="5">No hay ventas para los filtros seleccionados.</td></tr>{% endfor %}</tbody>
+  </table>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>
+const form = document.querySelector("#sale-form");
+const result = document.querySelector("#sale-result");
+const paymentNames = {
+  cash: "Efectivo",
+  card: "Tarjeta",
+  mercadopago: "Mercado Pago"
+};
+
+function escapeHtml(value) {
+  const element = document.createElement("span");
+  element.textContent = String(value);
+  return element.innerHTML;
+}
+
+function showConfirmation(data) {
+  const itemSummary = data.items
+    .map(item => `${escapeHtml(item.icon)} ${escapeHtml(item.name)} × ${escapeHtml(item.quantity)}`)
+    .join("<br>");
+  result.className = "panel sale-confirmation success";
+  result.innerHTML = `
+    <p class="eyebrow">Confirmación</p>
+    <h2>Venta registrada correctamente</h2>
+    <dl class="confirmation-details">
+      <div><dt>Número</dt><dd>#${escapeHtml(data.receipt_id)}</dd></div>
+      <div><dt>Productos</dt><dd>${itemSummary}</dd></div>
+      <div><dt>Total</dt><dd>$${Number(data.total).toFixed(2)}</dd></div>
+      <div><dt>Pago</dt><dd>${escapeHtml(paymentNames[data.payment_method] || data.payment_method)}</dd></div>
+    </dl>`;
+}
+
+function updateSalesView(data) {
+  document.querySelector("#total-sales").textContent = data.stats.count;
+  document.querySelector("#total-revenue").textContent = `$${Number(data.stats.revenue).toFixed(2)}`;
+  document.querySelector("#average-ticket").textContent = `$${Number(data.stats.average).toFixed(2)}`;
+
+  const hasFilters = new URLSearchParams(window.location.search).toString() !== "";
+  if (hasFilters) return;
+
+  const ranking = document.querySelector("#top-items");
+  ranking.innerHTML = data.top_items.length
+    ? data.top_items.map(([name, quantity]) =>
+        `<li><span>${escapeHtml(name)}</span><strong>${escapeHtml(quantity)} u.</strong></li>`
+      ).join("")
+    : '<li class="muted">Sin datos.</li>';
+
+  const history = document.querySelector("#sales-history");
+  const emptyRow = history.querySelector("td[colspan='5']");
+  if (emptyRow) emptyRow.closest("tr").remove();
+  history.insertAdjacentHTML("afterbegin", `
+    <tr>
+      <td>#${escapeHtml(data.receipt_id)}</td>
+      <td>${escapeHtml(data.created_at)}</td>
+      <td>${data.items.map(item => `${escapeHtml(item.icon)} ${escapeHtml(item.name)} × ${escapeHtml(item.quantity)}`).join("<br>")}</td>
+      <td>${escapeHtml(data.payment_method)}</td>
+      <td><strong>$${Number(data.total).toFixed(2)}</strong></td>
+    </tr>`);
+}
+
+const savedConfirmation = sessionStorage.getItem("lastSaleConfirmation");
+if (savedConfirmation) {
+  const savedData = JSON.parse(savedConfirmation);
+  if (savedData.items) showConfirmation(savedData);
+}
+
+const cart = new Map();
+const itemSelect = document.querySelector("#sale-item");
+const quantityInput = document.querySelector("#sale-quantity");
+const cartBody = document.querySelector("#sale-cart");
+const cartTotal = document.querySelector("#cart-total");
+
+function renderCart() {
+  const items = [...cart.values()];
+  if (!items.length) {
+    cartBody.innerHTML = '<tr class="empty-cart"><td colspan="4">Todavía no agregaste productos.</td></tr>';
+    cartTotal.textContent = "$0.00";
+    return;
+  }
+  cartBody.innerHTML = items.map(item => `
+    <tr>
+      <td>${escapeHtml(item.icon)} ${escapeHtml(item.name)}</td>
+      <td><input class="cart-quantity" data-item-id="${escapeHtml(item.menu_item_id)}" type="number" min="1" value="${escapeHtml(item.quantity)}" aria-label="Cantidad de ${escapeHtml(item.name)}"></td>
+      <td>$${(item.price * item.quantity).toFixed(2)}</td>
+      <td><button class="small ghost remove-cart-item" data-item-id="${escapeHtml(item.menu_item_id)}" type="button">Quitar</button></td>
+    </tr>`).join("");
+  cartTotal.textContent = `$${items.reduce((total, item) => total + item.price * item.quantity, 0).toFixed(2)}`;
+}
+
+document.querySelector("#add-sale-item").addEventListener("click", () => {
+  const option = itemSelect.options[itemSelect.selectedIndex];
+  const quantity = Number.parseInt(quantityInput.value, 10);
+  if (!option.value || !Number.isInteger(quantity) || quantity <= 0) return;
+  const existing = cart.get(option.value);
+  cart.set(option.value, {
+    menu_item_id: option.value,
+    name: option.dataset.name,
+    icon: option.dataset.icon,
+    price: Number(option.dataset.price),
+    quantity: (existing?.quantity || 0) + quantity
+  });
+  itemSelect.value = "";
+  quantityInput.value = "1";
+  renderCart();
+});
+
+cartBody.addEventListener("click", event => {
+  const button = event.target.closest(".remove-cart-item");
+  if (!button) return;
+  cart.delete(button.dataset.itemId);
+  renderCart();
+});
+
+cartBody.addEventListener("change", event => {
+  if (!event.target.matches(".cart-quantity")) return;
+  const item = cart.get(event.target.dataset.itemId);
+  const quantity = Number.parseInt(event.target.value, 10);
+  if (item && Number.isInteger(quantity) && quantity > 0) {
+    item.quantity = quantity;
+    renderCart();
+  }
+});
+
+form.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (!cart.size) {
+    result.className = "panel sale-confirmation danger";
+    result.innerHTML = "<h2>Agregá al menos un producto</h2><p>El ticket no puede registrarse vacío.</p>";
+    return;
+  }
+  result.className = "panel sale-confirmation loading";
+  result.innerHTML = "<p>Registrando venta…</p>";
+  const values = Object.fromEntries(new FormData(form).entries());
+  values.items = [...cart.values()].map(item => ({
+    menu_item_id: item.menu_item_id,
+    quantity: item.quantity
+  }));
+  try {
+    const response = await fetch("{{ url_for('create_sale') }}", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(values)
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error);
+    sessionStorage.setItem("lastSaleConfirmation", JSON.stringify(data));
+    showConfirmation(data);
+    updateSalesView(data);
+    cart.clear();
+    renderCart();
+    form.reset();
+  } catch (error) {
+    result.className = "panel sale-confirmation danger";
+    result.innerHTML = `<h2>No se pudo registrar la venta</h2><p>${escapeHtml(error.message || "Intentá nuevamente.")}</p>`;
+  }
+});
+</script>
+{% endblock %}

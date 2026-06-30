@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Ingresar · SmartGastro{% endblock %}
+{% block content %}
+<section class="login-card">
+  <p class="eyebrow">Gestión para foodtrucks</p>
+  <h1>Bienvenido a SmartGastro</h1>
+  <p>Ingresá para administrar stock, menú y ventas.</p>
+  <form method="post" class="stack">
+    <label>Usuario<input name="login" required autocomplete="username"></label>
+    <label>Contraseña<input name="password" type="password" required autocomplete="current-password"></label>
+    <button type="submit">Ingresar</button>
+  </form>
+</section>
+{% endblock %}

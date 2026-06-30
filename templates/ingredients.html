@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Inventario · SmartGastro{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">Inventario</p><h1>Ingredientes y stock</h1></div></div>
+<section class="panel">
+  <h2>Agregar ingrediente</h2>
+  <form method="post" class="form-grid">
+    <label>Icono<select name="icon" class="icon-select">{% for icon in icon_catalog %}<option value="{{ icon }}">{{ icon }}</option>{% endfor %}</select></label>
+    <label>Nombre<input name="name" required></label>
+    <label>Unidad<select name="unit" required>{% for unit in unit_catalog %}<option value="{{ unit }}">{{ unit }}</option>{% endfor %}</select></label>
+    <label>Stock<input name="stock" type="number" min="0" step="0.01" required></label>
+    <label>Stock mínimo<input name="min_stock" type="number" min="0" step="0.01" required></label>
+    <button type="submit">Agregar</button>
+  </form>
+</section>
+<section class="panel">
+  <p class="eyebrow">Ingreso de mercadería</p>
+  <h2>Registrar ingreso</h2>
+  <p class="muted">Ingresá la cantidad recibida. El stock actual se actualizará automáticamente.</p>
+  <form id="stock-receipt-form" method="post" class="receipt-grid">
+    <label>Ingrediente
+      <select id="receipt-ingredient" required>
+        <option value="">Seleccionar</option>
+        {% for item in ingredients %}
+          <option value="{{ item.id }}" data-unit="{{ item.unit }}">{{ item.icon }} {{ item.name }} · Stock: {{ item.stock|round(2) }} {{ item.unit }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Cantidad recibida<input name="quantity" type="number" min="0.01" step="0.01" required></label>
+    <button type="submit">Registrar ingreso</button>
+  </form>
+</section>
+<section class="panel table-wrap">
+  <table>
+    <thead><tr><th>Icono</th><th>Ingrediente</th><th>Unidad</th><th>Stock</th><th>Mínimo</th><th>Estado</th><th>Acciones</th></tr></thead>
+    <tbody>
+    {% for item in ingredients %}
+      <tr>
+          <td><select form="ingredient-{{ item.id }}" name="icon" class="icon-select">{% for icon in icon_catalog %}<option value="{{ icon }}" {% if item.icon == icon %}selected{% endif %}>{{ icon }}</option>{% endfor %}</select></td>
+          <td><input form="ingredient-{{ item.id }}" name="name" value="{{ item.name }}" required></td>
+          <td><select form="ingredient-{{ item.id }}" name="unit">{% for unit in unit_catalog %}<option value="{{ unit }}" {% if item.unit == unit %}selected{% endif %}>{{ unit }}</option>{% endfor %}</select></td>
+          <td><input form="ingredient-{{ item.id }}" name="stock" type="number" min="0" step="0.01" value="{{ item.stock }}" required></td>
+          <td><input form="ingredient-{{ item.id }}" name="min_stock" type="number" min="0" step="0.01" value="{{ item.min_stock }}" required></td>
+          <td>{% if item.low_stock %}<span class="badge danger">Bajo</span>{% else %}<span class="badge success">OK</span>{% endif %}</td>
+          <td class="actions">
+            <form id="ingredient-{{ item.id }}" method="post" action="{{ url_for('edit_ingredient', ingredient_id=item.id) }}"><button class="small">Guardar</button></form>
+            <form method="post" action="{{ url_for('delete_ingredient', ingredient_id=item.id) }}"><button class="small ghost" onclick="return confirm('¿Eliminar ingrediente?')">Eliminar</button></form>
+          </td>
+      </tr>
+    {% else %}<tr><td colspan="7">Todavía no hay ingredientes.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</section>
+<section class="panel table-wrap">
+  <h2>Historial de ingresos</h2>
+  <table>
+    <thead><tr><th>Fecha</th><th>Ingrediente</th><th>Stock anterior</th><th>Ingreso</th><th>Nuevo stock</th></tr></thead>
+    <tbody>
+    {% for receipt in stock_receipts %}
+      <tr>
+        <td>{{ receipt.created_at.strftime("%d/%m/%Y %H:%M") }}</td>
+        <td>{{ receipt.ingredient.icon }} {{ receipt.ingredient.name }}</td>
+        <td>{{ receipt.stock_before|round(2) }} {{ receipt.ingredient.unit }}</td>
+        <td><strong>+{{ receipt.quantity|round(2) }} {{ receipt.ingredient.unit }}</strong></td>
+        <td>{{ receipt.stock_after|round(2) }} {{ receipt.ingredient.unit }}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="5">Todavía no hay ingresos registrados.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>
+const receiptForm = document.querySelector("#stock-receipt-form");
+const ingredientSelect = document.querySelector("#receipt-ingredient");
+receiptForm.addEventListener("submit", (event) => {
+  if (!ingredientSelect.value) {
+    event.preventDefault();
+    ingredientSelect.focus();
+    return;
+  }
+  receiptForm.action = `/ingredients/${ingredientSelect.value}/receive`;
+});
+</script>
+{% endblock %}

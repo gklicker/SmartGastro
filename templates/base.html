@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}SmartGastro{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+  {% if current_user %}
+  <header>
+    <a class="brand" href="{{ url_for('dashboard') }}">SmartGastro</a>
+    <nav>
+      <a class="{% if request.endpoint == 'dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}">Dashboard</a>
+      <a class="{% if request.endpoint in ['ingredients', 'edit_ingredient', 'delete_ingredient'] %}active{% endif %}" href="{{ url_for('ingredients') }}">Inventario</a>
+      <a class="{% if request.endpoint in ['menu', 'edit_menu_item', 'edit_recipe', 'delete_menu_item'] %}active{% endif %}" href="{{ url_for('menu') }}">Menú</a>
+      <a class="{% if request.endpoint in ['sales', 'create_sale'] %}active{% endif %}" href="{{ url_for('sales') }}">Ventas</a>
+      <a href="{{ url_for('logout') }}">Salir</a>
+    </nav>
+  </header>
+  {% endif %}
+  <main class="{% if not current_user %}auth-page{% endif %}">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="alert {{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

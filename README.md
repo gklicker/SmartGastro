@@ -1,114 +1,152 @@
 # SmartGastro
 
-Sistema de gestión de inventario, ventas y ubicaciones para una red de Foodtrucks.
+MVP web para administrar inventario, menú y ventas de foodtrucks. El dashboard
+integra el clima de Buenos Aires para ayudar a reducir las pérdidas de
+mercadería durante jornadas con lluvia.
 
----
-
-## Contexto académico
-
-Trabajo parcial para la materia **Análisis y Metodología de Sistemas**  
-Cuatrimestre **26-1** · Grupo **ACN4AP**
-
----
-
-## Consigna
-
-Una consultora tecnológica fue contactada por una asociación de dueños de Foodtrucks. Actualmente gestionan sus ventas, inventario y ubicaciones en Excel o en papel. Los problemas principales: pérdida de mercadería por mal clima en ferias al aire libre y quedarse sin stock a mitad de un evento.
-
-Se solicita diseñar **SmartGastro**, un sistema para gestionar inventario, ventas y ubicaciones.
-
-**Primera entrega (parcial):** aplicación de consola en Python con arquitectura orientada a objetos, captura de requerimientos, análisis de negocio y modelado UML.
-
-**Segunda entrega (final):** migración a la web utilizando Flask y REST API.
-
----
+Trabajo Práctico Integrador de **Análisis y Metodología de Sistemas**.
 
 ## Funcionalidades
 
-- Agregar productos al inventario con validación de duplicados
-- Registrar ventas con descuento automático de stock
-- Consultar el inventario actual con alertas de stock bajo
-- Crear eventos con pronóstico del clima en tiempo real (Open-Meteo API)
-- Ver historial de ventas por evento
-- Gestionar usuarios con roles diferenciados (owner, accountant, seller, cashier, cook)
-- Gestionar foodtrucks con inventario propio y staff asignado
-- Crear recetas de platos del menú vinculadas a ingredientes con unidades
-- Emitir y cerrar tickets de venta con descuento automático por receta
-- Soporte de múltiples medios de pago: efectivo, tarjeta, MercadoPago
-- Cancelar o reembolsar tickets en estados intermedios
+- Inicio y cierre de sesión con contraseña hasheada.
+- Rutas de gestión protegidas.
+- CRUD de ingredientes y existencias.
+- Unidades de medida e iconos visuales para ingredientes y platos.
+- Alertas de stock bajo.
+- CRUD de productos del menú y recetas completas de múltiples ingredientes.
+- Registro asíncrono de ventas con múltiples productos mediante `fetch()` y JSON.
+- Descuento automático de ingredientes al vender.
+- Historial, filtros, ranking, ingresos y ticket promedio.
+- Pronóstico por lugar, fecha y hora con recomendaciones de producción.
+- Persistencia relacional con SQLite y SQLAlchemy.
 
----
+La versión de consola de la primera entrega continúa disponible en `cli.py`.
+La segunda entrega se ejecuta desde `app.py`.
 
-## Modelos
+## Tecnologías
 
-| Modelo | Descripción |
-|---|---|
-| `Ingredient` | Ingrediente con nombre, unidad y alerta de stock mínimo |
-| `Inventory` | Inventario de ingredientes por foodtruck; calcula porciones disponibles |
-| `MenuItem` | Plato del menú con precio y lista de ingredientes (receta) |
-| `Receipt` / `ReceiptItem` | Ticket de venta con ítems, medio de pago y estado (open / closed / cancelled / refunded) |
-| `Foodtruck` | Foodtruck con inventario propio, staff y tickets de venta |
-| `User` | Usuario con login, contraseña hasheada (SHA-256) y rol |
-| `Role` | Enum de roles: owner, accountant, seller, cashier, cook |
-| `Event` | Evento/feria con ubicación, fecha y pronóstico del clima |
+- Python 3
+- Flask y Jinja
+- Flask-SQLAlchemy
+- SQLite
+- HTML, CSS y JavaScript
+- Open-Meteo API
 
----
+## Instalación
 
-## Arquitectura
+### 1. Crear el entorno virtual
 
-```
-cli.py              ← menú interactivo (consola)
-services/           ← lógica de negocio y orquestación
-  inventory_service.py
-  sale_service.py
-  event_service.py
-  menu_service.py
-  receipt_service.py
-  foodtruck_service.py
-  user_service.py
-repository/
-  in_memory/        ← almacenamiento en memoria (reemplazable por DB)
-models/             ← clases con encapsulamiento estricto
-  ingredient.py · inventory.py · menu_item.py
-  receipt.py · foodtruck.py · user.py · role.py · event.py
-migrations/         ← scripts de migración de base de datos (2da entrega)
-external/           ← integración con API del clima
-```
-
----
-
-## Stack
-
-| Tecnología | Uso |
-|---|---|
-| Python 3 | Lógica de negocio, consola (1ra entrega) |
-| Flask | Backend web (2da entrega) |
-| HTML / CSS / JS | Frontend (2da entrega) |
-
----
-
-## Cómo ejecutar
-
-**1. Crear el entorno virtual**
 ```bash
-python3 -m venv .venv
+python -m venv .venv
 ```
 
-**2. Activar el entorno**
-```bash
-# macOS / Linux
-source .venv/bin/activate
+### 2. Activarlo
 
-# Windows
+Windows:
+
+```bash
 .venv\Scripts\activate
 ```
 
-**3. Instalar dependencias**
+macOS o Linux:
+
+```bash
+source .venv/bin/activate
+```
+
+### 3. Instalar las dependencias
+
 ```bash
 pip install -r requirements.txt
 ```
 
-**4. Ejecutar**
+### 4. Configurar las variables de entorno
+
+Copiar `.env.example` como `.env` y reemplazar `SECRET_KEY` por un valor
+privado. El archivo `.env` nunca debe subirse al repositorio.
+
+### 5. Crear la base y el usuario de demostración
+
 ```bash
-python3 cli.py
+flask --app app init-db
 ```
+
+Para cargar ingredientes, recetas y ventas de ejemplo:
+
+```bash
+flask --app app seed-demo
+```
+
+Para reemplazar todos los datos locales por una demo limpia:
+
+```bash
+flask --app app seed-demo --reset
+```
+
+La carga normal es idempotente: no duplica información si la demo ya existe.
+
+Si una base creada con una versión anterior tiene números de ticket fuera de
+orden, se pueden ordenar cronológicamente sin borrar ventas:
+
+```bash
+flask --app app renumber-tickets
+```
+
+### 6. Ejecutar
+
+```bash
+flask --app app run
+```
+
+Abrir `http://127.0.0.1:5000`.
+
+## Pruebas automáticas
+
+Las pruebas usan una base SQLite temporal en memoria y no modifican los datos
+de demostración ni la base local:
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+Cubren autenticación, rutas protegidas, inventario, ingresos de mercadería,
+ventas, descuento de stock, rollback, alertas y formato argentino de fecha.
+
+## Credenciales de prueba
+
+- Usuario: `admin`
+- Contraseña: `SmartGastro2026!`
+
+La contraseña puede cambiarse antes de crear la base mediante
+`DEMO_PASSWORD` en `.env`.
+
+## Modelo de datos
+
+- `User`: usuarios autorizados.
+- `Ingredient`: ingredientes, stock y nivel mínimo.
+- `MenuItem`: productos disponibles para la venta.
+- `RecipeIngredient`: consumo de ingredientes por unidad vendida.
+- `Receipt`: cabecera de una venta.
+- `ReceiptItem`: productos y cantidades de cada venta.
+
+Las operaciones de creación, modificación, eliminación y venta se ejecutan con
+`try/except`; ante un error se realiza `db.session.rollback()`. Las consultas
+se construyen mediante el ORM, sin concatenar datos del usuario en SQL.
+
+## Secretos y archivos locales
+
+El repositorio excluye:
+
+- `.env`
+- bases `.db`, `.sqlite` y `.sqlite3`
+- entornos virtuales
+- cachés de Python
+
+Solo `.env.example`, sin secretos reales, debe permanecer versionado.
+
+## Datos de demostración
+
+La demo incluye hamburguesas, cheeseburgers, hot dogs, papas fritas y bebidas,
+con sus recetas completas. También crea ventas distribuidas en distintas fechas
+para poder probar filtros, productos más vendidos, productos sin ventas y
+ticket promedio sin tener que ingresar datos manualmente.
