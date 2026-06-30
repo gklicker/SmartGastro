@@ -16,7 +16,10 @@
       <a class="{% if request.endpoint in ['ingredients', 'edit_ingredient', 'delete_ingredient'] %}active{% endif %}" href="{{ url_for('ingredients') }}">Inventario</a>
       <a class="{% if request.endpoint in ['menu', 'edit_menu_item', 'edit_recipe', 'delete_menu_item'] %}active{% endif %}" href="{{ url_for('menu') }}">Menú</a>
       <a class="{% if request.endpoint in ['sales', 'create_sale'] %}active{% endif %}" href="{{ url_for('sales') }}">Ventas</a>
-      <a href="{{ url_for('logout') }}">Salir</a>
+      <form method="post" action="{{ url_for('logout') }}" class="nav-logout">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="link-button">Salir</button>
+      </form>
     </nav>
   </header>
   {% endif %}

@@ -13,9 +13,19 @@
 body { margin: 0; background: var(--paper); color: var(--ink); }
 header { min-height: 68px; padding: 0 5vw; background: var(--green); display: flex; align-items: center; justify-content: space-between; gap: 2rem; }
 .brand { color: white; text-decoration: none; font-size: 1.35rem; font-weight: 800; }
-nav { display: flex; gap: 1rem; flex-wrap: wrap; }
+nav { display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; }
 nav a { color: #eef9f2; text-decoration: none; }
 nav a.active { color: var(--lime); font-weight: 900; }
+nav .nav-logout { display: inline; margin: 0; padding: 0; }
+nav .link-button {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: #eef9f2;
+  cursor: pointer;
+}
+nav .link-button:hover { color: var(--lime); }
 main { width: min(1160px, 92vw); margin: 2.5rem auto; }
 .auth-page { min-height: 90vh; display: grid; place-items: center; margin-top: 0; }
 .login-card, .panel, .stats article { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 14px 40px rgba(24,33,29,.07); }

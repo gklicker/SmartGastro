@@ -130,7 +130,7 @@ def create_app(test_config=None):
             flash("Usuario o contraseña incorrectos.", "danger")
         return render_template("login.html")
 
-    @app.get("/logout")
+    @app.post("/logout")
     def logout():
         session.clear()
         return redirect(url_for("login"))
