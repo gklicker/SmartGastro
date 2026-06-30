@@ -285,13 +285,28 @@ def create_app(test_config=None):
     @login_required
     def delete_ingredient(ingredient_id):
         ingredient = db.get_or_404(Ingredient, ingredient_id)
+        recipe_users = (
+            db.session.query(MenuItem.name)
+            .join(RecipeIngredient, RecipeIngredient.menu_item_id == MenuItem.id)
+            .filter(RecipeIngredient.ingredient_id == ingredient_id)
+            .order_by(MenuItem.name)
+            .all()
+        )
+        if recipe_users:
+            names = ", ".join(name for (name,) in recipe_users)
+            flash(
+                f"No se puede eliminar {ingredient.name}: lo usan las recetas de {names}.",
+                "danger",
+            )
+            return redirect(url_for("ingredients"))
         try:
             db.session.delete(ingredient)
             db.session.commit()
             flash("Ingrediente eliminado.", "success")
-        except SQLAlchemyError:
+        except SQLAlchemyError as exc:
             db.session.rollback()
-            flash("No se puede eliminar un ingrediente usado en ventas o recetas.", "danger")
+            logger.exception("delete_ingredient falló: %s", exc)
+            flash("No se pudo eliminar el ingrediente.", "danger")
         return redirect(url_for("ingredients"))
 
     @app.route("/menu", methods=["GET", "POST"])
@@ -406,13 +421,24 @@ def create_app(test_config=None):
     @login_required
     def delete_menu_item(item_id):
         item = db.get_or_404(MenuItem, item_id)
+        has_sales = db.session.query(
+            ReceiptItem.id
+        ).filter_by(menu_item_id=item_id).first()
+        if has_sales:
+            flash(
+                f"{item.name} ya tiene ventas registradas. Desactivalo "
+                "en lugar de eliminarlo para preservar el historial.",
+                "danger",
+            )
+            return redirect(url_for("menu"))
         try:
             db.session.delete(item)
             db.session.commit()
             flash("Plato eliminado.", "success")
-        except SQLAlchemyError:
+        except SQLAlchemyError as exc:
             db.session.rollback()
-            flash("El plato tiene ventas asociadas; desactivalo en lugar de eliminarlo.", "danger")
+            logger.exception("delete_menu_item falló: %s", exc)
+            flash("No se pudo eliminar el plato.", "danger")
         return redirect(url_for("menu"))
 
     @app.get("/sales")
