@@ -6,6 +6,11 @@ mercadería durante jornadas con lluvia.
 
 Trabajo Práctico Integrador de **Análisis y Metodología de Sistemas**.
 
+## Integrantes
+
+- Anna Spiridenkova
+- Andrei Iushkov
+
 ## Funcionalidades
 
 - Inicio y cierre de sesión con contraseña hasheada.
