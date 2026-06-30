@@ -31,9 +31,9 @@
       <tr>
           <td><select form="menu-item-{{ item.id }}" name="icon" class="icon-select">{% for icon in icon_catalog %}<option value="{{ icon }}" {% if item.icon == icon %}selected{% endif %}>{{ icon }}</option>{% endfor %}</select></td>
           <td><input form="menu-item-{{ item.id }}" name="name" value="{{ item.name }}" required></td>
-          <td><input form="menu-item-{{ item.id }}" name="price" type="number" min="0.01" step="0.01" value="{{ item.price }}" required></td>
+          <td><input form="menu-item-{{ item.id }}" name="price" type="number" min="0.01" step="0.01" value="{{ item.price|qty }}" required></td>
           <td><input form="menu-item-{{ item.id }}" name="description" value="{{ item.description }}"></td>
-          <td><div class="recipe-summary">{% for link in item.recipe %}<span>{{ link.ingredient.icon }} {{ link.ingredient.name }}: {{ link.quantity|round(2) }} {{ link.ingredient.unit }}</span>{% else %}<span class="muted">Sin receta</span>{% endfor %}</div><a class="text-link" href="{{ url_for('edit_recipe', item_id=item.id) }}">Editar receta</a></td>
+          <td><div class="recipe-summary">{% for link in item.recipe %}<span>{{ link.ingredient.icon }} {{ link.ingredient.name }}: {{ link.quantity|qty }} {{ link.ingredient.unit }}</span>{% else %}<span class="muted">Sin receta</span>{% endfor %}</div><a class="text-link" href="{{ url_for('edit_recipe', item_id=item.id) }}">Editar receta</a></td>
           <td><input form="menu-item-{{ item.id }}" name="active" type="checkbox" {% if item.active %}checked{% endif %}></td>
           <td class="actions">
             <form id="menu-item-{{ item.id }}" method="post" action="{{ url_for('edit_menu_item', item_id=item.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="small">Guardar</button></form>

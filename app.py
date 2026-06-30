@@ -110,6 +110,16 @@ def create_app(test_config=None):
     def inject_catalogs():
         return {"icon_catalog": ICONS, "unit_catalog": UNITS}
 
+    @app.template_filter("qty")
+    def format_qty(value):
+        """Formato amigable para cantidades: '100', '17.89', '0.04' sin ceros sobrantes."""
+        if value is None:
+            return "0"
+        try:
+            return f"{round(float(value), 2):g}"
+        except (TypeError, ValueError):
+            return str(value)
+
     def login_required(view):
         @wraps(view)
         def wrapped_view(**kwargs):

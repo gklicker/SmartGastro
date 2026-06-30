@@ -1,50 +1,92 @@
-{% extends "base.html" %}
-{% block title %}Dashboard · SmartGastro{% endblock %}
+{% extends "base.html" %} {% block title %}Dashboard · SmartGastro{% endblock %}
 {% block content %}
 <div class="page-heading">
-  <div><p class="eyebrow">Resumen del negocio</p><h1>Hola, {{ current_user.login }}</h1></div>
+    <div>
+        <p class="eyebrow">Resumen del negocio</p>
+        <h1>Hola, {{ current_user.login }}</h1>
+    </div>
 </div>
 <section class="stats">
-  <article><span>Ventas registradas</span><strong>{{ sales_count }}</strong></article>
-  <article><span>Ingresos</span><strong>${{ "%.2f"|format(revenue) }}</strong></article>
-  <article><span>Alertas de stock</span><strong>{{ low_stock|length }}</strong></article>
+    <article>
+        <span>Ventas registradas</span><strong>{{ sales_count }}</strong>
+    </article>
+    <article>
+        <span>Ingresos</span><strong>${{ "%.2f"|format(revenue) }}</strong>
+    </article>
+    <article>
+        <span>Alertas de stock</span><strong>{{ low_stock|length }}</strong>
+    </article>
 </section>
 <section class="grid-two">
-  <article class="panel weather">
-    <p class="eyebrow">Clima para eventos</p>
-    <h2>Planificación de producción</h2>
-    <form method="get" class="weather-form">
-      <label>Lugar<input name="location" value="{{ location }}" placeholder="Palermo, Buenos Aires" required></label>
-      <label>Fecha (DD/MM/AAAA)<input name="date" type="text" value="{{ selected_date }}" placeholder="DD/MM/AAAA" pattern="\d{2}/\d{2}/\d{4}" title="Ingresá la fecha en formato DD/MM/AAAA. Disponible desde {{ today }} hasta {{ max_forecast_date }}." required></label>
-      <label>Hora (opcional)<input name="time" type="time" value="{{ selected_time }}"></label>
-      <button type="submit">Consultar</button>
-    </form>
-    {% if weather %}
-      <p class="weather-place">{{ weather.place }} · {{ selected_date }}{% if weather.time %} · {{ weather.time }}{% endif %}</p>
-      <p class="weather-status">{{ weather.status }}</p>
-      <p>{{ weather.rain_probability }}% de probabilidad · {{ weather.rain_mm }} mm · {{ weather.temp_min }}° / {{ weather.temp_max }}°</p>
-      <p>{{ weather.recommendation }}</p>
-    {% else %}
-      <p class="muted">{{ weather_error }}</p>
-    {% endif %}
-  </article>
-  <article class="panel status-panel {% if low_stock or weather_alert %}has-alerts{% else %}all-clear{% endif %}">
-    {% if low_stock or weather_alert %}
-      <p class="attention-label">¡ATENCIÓN!</p>
-      <h2>Hay situaciones que requieren atención</h2>
-      <ul>
-        {% for item in low_stock %}
-          <li>Stock bajo de {{ item.name }}: {{ item.stock|round(2) }} {{ item.unit }}.</li>
-        {% endfor %}
-        {% if weather_alert %}
-          <li>Hay riesgo de lluvia para el lugar y la fecha consultados.</li>
+    <article class="panel weather">
+        <p class="eyebrow">Clima para eventos</p>
+        <h2>Planificación de producción</h2>
+        <form method="get" class="weather-form">
+            <label
+                >Lugar<input
+                    name="location"
+                    value="{{ location }}"
+                    placeholder="Palermo, Buenos Aires"
+                    required
+            /></label>
+            <label
+                >Fecha (DD/MM/AAAA)<input
+                    name="date"
+                    type="text"
+                    inputmode="numeric"
+                    value="{{ selected_date }}"
+                    placeholder="DD/MM/AAAA"
+                    pattern="\d{2}/\d{2}/\d{4}"
+                    title="Ingresá la fecha en formato DD/MM/AAAA. Disponible desde {{ today }} hasta {{ max_forecast_date }}."
+                    required
+            /></label>
+            <label
+                >Hora (opcional)<input
+                    name="time"
+                    type="time"
+                    value="{{ selected_time }}"
+            /></label>
+            <button type="submit">Consultar</button>
+        </form>
+        {% if weather %}
+        <p class="weather-place">
+            {{ weather.place }} · {{ selected_date }}{% if weather.time %} · {{
+            weather.time }}{% endif %}
+        </p>
+        <p class="weather-status">{{ weather.status }}</p>
+        <p>
+            {{ weather.rain_probability }}% de probabilidad · {{ weather.rain_mm
+            }} mm · {{ weather.temp_min }}° / {{ weather.temp_max }}°
+        </p>
+        <p>{{ weather.recommendation }}</p>
+        {% else %}
+        <p class="muted">{{ weather_error }}</p>
         {% endif %}
-      </ul>
-    {% else %}
-      <p class="all-clear-label">Todo está en orden</p>
-      <h2>No hay alertas activas</h2>
-      <p class="muted">Si se detecta stock bajo o riesgo de lluvia, aparecerá una alerta en este panel.</p>
-    {% endif %}
-  </article>
+    </article>
+    <article
+        class="panel status-panel {% if low_stock or weather_alert %}has-alerts{% else %}all-clear{% endif %}"
+    >
+        {% if low_stock or weather_alert %}
+        <p class="attention-label">¡ATENCIÓN!</p>
+        <h2>Hay situaciones que requieren atención</h2>
+        <ul>
+            {% for item in low_stock %}
+            <li>
+                Stock bajo de {{ item.name }}: {{ item.stock|qty }} {{
+                item.unit }}.
+            </li>
+            {% endfor %} {% if weather_alert %}
+            <li>Hay riesgo de lluvia para el lugar y la fecha consultados.</li>
+            {% endif %}
+        </ul>
+        {% else %}
+        <p class="all-clear-label">Todo está en orden</p>
+        <h2>No hay alertas activas</h2>
+        <p class="muted">
+            Si se detecta stock bajo o riesgo de lluvia, aparecerá una alerta en
+            este panel.
+        </p>
+        {% endif %}
+    </article>
 </section>
 {% endblock %}

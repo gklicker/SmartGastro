@@ -24,7 +24,7 @@
       <select id="receipt-ingredient" required>
         <option value="">Seleccionar</option>
         {% for item in ingredients %}
-          <option value="{{ item.id }}" data-unit="{{ item.unit }}">{{ item.icon }} {{ item.name }} · Stock: {{ item.stock|round(2) }} {{ item.unit }}</option>
+          <option value="{{ item.id }}" data-unit="{{ item.unit }}">{{ item.icon }} {{ item.name }} · Stock: {{ item.stock|qty }} {{ item.unit }}</option>
         {% endfor %}
       </select>
     </label>
@@ -41,8 +41,8 @@
           <td><select form="ingredient-{{ item.id }}" name="icon" class="icon-select">{% for icon in icon_catalog %}<option value="{{ icon }}" {% if item.icon == icon %}selected{% endif %}>{{ icon }}</option>{% endfor %}</select></td>
           <td><input form="ingredient-{{ item.id }}" name="name" value="{{ item.name }}" required></td>
           <td><select form="ingredient-{{ item.id }}" name="unit">{% for unit in unit_catalog %}<option value="{{ unit }}" {% if item.unit == unit %}selected{% endif %}>{{ unit }}</option>{% endfor %}</select></td>
-          <td><input form="ingredient-{{ item.id }}" name="stock" type="number" min="0" step="0.01" value="{{ item.stock }}" required></td>
-          <td><input form="ingredient-{{ item.id }}" name="min_stock" type="number" min="0" step="0.01" value="{{ item.min_stock }}" required></td>
+          <td><input form="ingredient-{{ item.id }}" name="stock" type="number" min="0" step="0.01" value="{{ item.stock|qty }}" required></td>
+          <td><input form="ingredient-{{ item.id }}" name="min_stock" type="number" min="0" step="0.01" value="{{ item.min_stock|qty }}" required></td>
           <td>{% if item.low_stock %}<span class="badge danger">Bajo</span>{% else %}<span class="badge success">OK</span>{% endif %}</td>
           <td class="actions">
             <form id="ingredient-{{ item.id }}" method="post" action="{{ url_for('edit_ingredient', ingredient_id=item.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="small">Guardar</button></form>
@@ -62,9 +62,9 @@
       <tr>
         <td>{{ receipt.created_at.strftime("%d/%m/%Y %H:%M") }}</td>
         <td>{{ receipt.ingredient.icon }} {{ receipt.ingredient.name }}</td>
-        <td>{{ receipt.stock_before|round(2) }} {{ receipt.ingredient.unit }}</td>
-        <td><strong>+{{ receipt.quantity|round(2) }} {{ receipt.ingredient.unit }}</strong></td>
-        <td>{{ receipt.stock_after|round(2) }} {{ receipt.ingredient.unit }}</td>
+        <td>{{ receipt.stock_before|qty }} {{ receipt.ingredient.unit }}</td>
+        <td><strong>+{{ receipt.quantity|qty }} {{ receipt.ingredient.unit }}</strong></td>
+        <td>{{ receipt.stock_after|qty }} {{ receipt.ingredient.unit }}</td>
       </tr>
     {% else %}
       <tr><td colspan="5">Todavía no hay ingresos registrados.</td></tr>
