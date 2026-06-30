@@ -18,8 +18,9 @@ from flask import (
     url_for,
 )
 from flask_wtf.csrf import CSRFProtect
-from sqlalchemy import inspect, text
+from sqlalchemy import func, inspect, text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from sqlalchemy.orm import joinedload
 
 from external.weather import geocode, get_forecast_for_date
 from services.web_service import (
@@ -173,6 +174,7 @@ def create_app(test_config=None):
         low_stock = Ingredient.query.filter(
             Ingredient.stock <= Ingredient.min_stock
         ).all()
+        revenue = db.session.query(func.coalesce(func.sum(Receipt.total_amount), 0)).scalar()
         weather_alert = bool(
             weather
             and (
@@ -194,7 +196,7 @@ def create_app(test_config=None):
             low_stock=low_stock,
             weather_alert=weather_alert,
             sales_count=Receipt.query.count(),
-            revenue=sum(receipt.total_amount for receipt in Receipt.query.all()),
+            revenue=revenue,
         )
 
     @app.route("/ingredients", methods=["GET", "POST"])
@@ -410,7 +412,10 @@ def create_app(test_config=None):
         date_from_raw = request.args.get("date_from", "")
         date_to_raw = request.args.get("date_to", "")
         month_raw = request.args.get("month", "")
-        query = Receipt.query.order_by(Receipt.created_at.desc())
+        query = (
+            Receipt.query.options(joinedload(Receipt.items).joinedload(ReceiptItem.menu_item))
+            .order_by(Receipt.created_at.desc())
+        )
         if date_from_raw:
             query = query.filter(Receipt.created_at >= datetime.fromisoformat(date_from_raw))
         if date_to_raw:

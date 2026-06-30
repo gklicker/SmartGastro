@@ -1,4 +1,4 @@
-from collections import Counter
+from sqlalchemy import func
 
 from web_models import (
     Ingredient,
@@ -88,18 +88,23 @@ def register_sale(items, payment_method, cashier_id):
 
 
 def get_total_sales_stats():
-    receipts = Receipt.query.all()
-    revenue = sum(receipt.total_amount for receipt in receipts)
+    count, revenue = db.session.query(
+        func.count(Receipt.id), func.coalesce(func.sum(Receipt.total_amount), 0)
+    ).one()
     return {
-        "count": len(receipts),
+        "count": count,
         "revenue": revenue,
-        "average": revenue / len(receipts) if receipts else 0,
+        "average": revenue / count if count else 0,
     }
 
 
 def get_top_items(limit=5):
-    quantities = Counter()
-    for receipt in Receipt.query.all():
-        for line in receipt.items:
-            quantities[line.menu_item.name] += line.quantity
-    return quantities.most_common(limit)
+    rows = (
+        db.session.query(MenuItem.name, func.sum(ReceiptItem.quantity).label("total"))
+        .join(ReceiptItem, ReceiptItem.menu_item_id == MenuItem.id)
+        .group_by(MenuItem.id, MenuItem.name)
+        .order_by(func.sum(ReceiptItem.quantity).desc())
+        .limit(limit)
+        .all()
+    )
+    return [[name, int(total)] for name, total in rows]
