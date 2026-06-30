@@ -1,7 +1,7 @@
 from datetime import datetime
 
+import bcrypt
 from flask_sqlalchemy import SQLAlchemy
-from werkzeug.security import check_password_hash, generate_password_hash
 
 
 db = SQLAlchemy()
@@ -16,10 +16,15 @@ class User(db.Model):
     active = db.Column(db.Boolean, nullable=False, default=True)
 
     def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
+        hashed = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
+        self.password_hash = hashed.decode("utf-8")
 
     def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
+        if not self.password_hash:
+            return False
+        return bcrypt.checkpw(
+            password.encode("utf-8"), self.password_hash.encode("utf-8")
+        )
 
 
 class Ingredient(db.Model):
