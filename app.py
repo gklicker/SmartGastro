@@ -1,9 +1,11 @@
+import logging
 import os
 from collections import Counter
 from datetime import date, datetime, timedelta
 from functools import wraps
 
 import click
+import requests
 from dotenv import load_dotenv
 from flask import (
     Flask,
@@ -40,6 +42,15 @@ from web_models import (
 
 
 load_dotenv()
+
+logger = logging.getLogger("smartgastro")
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    handler.setFormatter(
+        logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
+    )
+    logger.addHandler(handler)
+    logger.setLevel(os.getenv("LOG_LEVEL", "INFO"))
 
 csrf = CSRFProtect()
 
@@ -150,8 +161,15 @@ def create_app(test_config=None):
                 latitude, longitude, forecast_date, selected_time or None
             )
             weather["place"] = f"{place_name}, {country}"
-        except Exception as exc:
-            weather_error = str(exc) or "El servicio climático no está disponible."
+        except ValueError as exc:
+            weather_error = str(exc) or "Fecha o ubicación inválida."
+            logger.info("Weather request rejected: %s", exc)
+        except requests.RequestException as exc:
+            weather_error = "El servicio climático no responde en este momento."
+            logger.warning("Weather upstream failure: %s", exc)
+        except (KeyError, TypeError) as exc:
+            weather_error = "El servicio climático devolvió datos incompletos."
+            logger.error("Weather payload malformed: %s", exc, exc_info=True)
         low_stock = Ingredient.query.filter(
             Ingredient.stock <= Ingredient.min_stock
         ).all()
