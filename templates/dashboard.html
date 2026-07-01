@@ -32,7 +32,7 @@
             <label
                 >Fecha (DD/MM/AAAA)<input
                     name="date"
-                    type="text"
+                    type="date"
                     inputmode="numeric"
                     value="{{ selected_date }}"
                     placeholder="DD/MM/AAAA"
@@ -72,8 +72,8 @@
         <ul>
             {% for item in low_stock %}
             <li>
-                Stock bajo de {{ item.name }}: {{ item.stock|qty }} {{
-                item.unit }}.
+                Stock bajo de {{ item.name }}: {{ item.stock|qty }} {{ item.unit
+                }}.
             </li>
             {% endfor %} {% if weather_alert %}
             <li>Hay riesgo de lluvia para el lugar y la fecha consultados.</li>
