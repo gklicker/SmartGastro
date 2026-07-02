@@ -89,19 +89,23 @@ def create_app(test_config=None):
 
     def ensure_schema():
         """Pequeña migración compatible con la base creada por la primera versión web."""
-        db.create_all()
-        inspector = inspect(db.engine)
-        upgrades = {
-            "ingredient": ("icon", "ALTER TABLE ingredient ADD COLUMN icon VARCHAR(12) NOT NULL DEFAULT '📦'"),
-            "menu_item": ("icon", "ALTER TABLE menu_item ADD COLUMN icon VARCHAR(12) NOT NULL DEFAULT '🍽️'"),
-        }
-        for table_name, (column_name, statement) in upgrades.items():
-            if table_name not in inspector.get_table_names():
-                continue
-            columns = {column["name"] for column in inspector.get_columns(table_name)}
-            if column_name not in columns:
-                db.session.execute(text(statement))
-        db.session.commit()
+        try:
+            db.create_all()
+            inspector = inspect(db.engine)
+            upgrades = {
+                "ingredient": ("icon", "ALTER TABLE ingredient ADD COLUMN icon VARCHAR(12) NOT NULL DEFAULT '📦'"),
+                "menu_item": ("icon", "ALTER TABLE menu_item ADD COLUMN icon VARCHAR(12) NOT NULL DEFAULT '🍽️'"),
+            }
+            for table_name, (column_name, statement) in upgrades.items():
+                if table_name not in inspector.get_table_names():
+                    continue
+                columns = {column["name"] for column in inspector.get_columns(table_name)}
+                if column_name not in columns:
+                    db.session.execute(text(statement))
+            db.session.commit()
+        except SQLAlchemyError:
+            db.session.rollback()
+            raise
 
     with app.app_context():
         ensure_schema()
@@ -580,17 +584,21 @@ def create_app(test_config=None):
     def seed_demo_command(reset):
         ensure_schema()
         if reset:
-            for model in (
-                ReceiptItem,
-                Receipt,
-                RecipeIngredient,
-                StockReceipt,
-                MenuItem,
-                Ingredient,
-                User,
-            ):
-                db.session.query(model).delete()
-            db.session.commit()
+            try:
+                for model in (
+                    ReceiptItem,
+                    Receipt,
+                    RecipeIngredient,
+                    StockReceipt,
+                    MenuItem,
+                    Ingredient,
+                    User,
+                ):
+                    db.session.query(model).delete()
+                db.session.commit()
+            except SQLAlchemyError:
+                db.session.rollback()
+                raise
         if Receipt.query.first() or MenuItem.query.first():
             print("La demo ya esta cargada. Usa --reset para recrearla.")
             return
